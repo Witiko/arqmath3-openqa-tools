@@ -24,8 +24,17 @@ def read_task3_result_file(file_path, max_answer_length=1200):
             if len(answer) > max_answer_length:
                 raise ValueError(f'Answer to topic {topic_id} on line {line_number} contains '
                                  f'{len(answer)} Unicode characters, but at most '
-                                 f'{max_answer_length} were expected')
-            result[topic_id] = (topic_id, int(rank), float(score), run_id, answer)
+                                 f'{max_answer_length} were expected.')
+            rank, score = int(rank), float(score)
+            if rank != 1:
+                LOGGER.warning(f'Answer to topic {topic_id} on line {line_number} has rank '
+                               f'{rank}. Ranks of all answers should be 1.')
+            if topic_id in result:
+                *_, previous_line_number = result[topic_id]
+                raise ValueError(f'Topic {topic_id} has at least two different answers, the first '
+                                 f'on line {previous_line_number} and the second on line '
+                                 f'{line_number}. All topics should only have one answer.')
+            result[topic_id] = (topic_id, rank, score, run_id, answer, line_number)
     return result
 
 
@@ -42,7 +51,7 @@ def main():
     input_file = args['in']
 
     _ = read_task3_result_file(input_file)
-    LOGGER.info(f'{input_file} validates')
+    LOGGER.info(f'{input_file} validates.')
 
 
 if __name__ == "__main__":
