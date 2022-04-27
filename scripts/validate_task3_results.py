@@ -25,7 +25,7 @@ def read_task3_result_file(file_path, max_answer_length=1200):
                 raise ValueError(f'Answer to topic {topic_id} on line {line_number} contains '
                                  f'{len(answer)} Unicode characters, but at most '
                                  f'{max_answer_length} were expected')
-            result[topic_id] = (topic_id, str(rank), str(score), run_id, answer)
+            result[topic_id] = (topic_id, int(rank), float(score), run_id, answer)
     return result
 
 
