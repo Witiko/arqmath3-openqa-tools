@@ -12,7 +12,7 @@ def read_task1_result_file(file_path):
     @return: dict of topic ids and results. results is dict of answer ids, ranks, scores, and run identifiers
     """
     result = defaultdict(lambda: dict())
-    with open(file_path, newline='') as csv_file:
+    with open(file_path, 'rt', newline='', encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter='\t')
         for row in csv_reader:
             topic_id, answer_id, rank, score, run_id = row
@@ -29,7 +29,7 @@ def write_task3_result_file(file_path, result, max_length=1200):
     @return:
     """
     answers = load_answers(text_format='text+latex')
-    result_file = open(file_path, "w", newline='', encoding="utf-8")
+    result_file = open(file_path, 'wt', newline='', encoding='utf-8')
     csv_writer = csv.writer(result_file, delimiter='\t', quoting=csv.QUOTE_MINIMAL)
     for topic_id in sorted(result):
         rank_getter = lambda item: item[1][0]  # noqa:E731

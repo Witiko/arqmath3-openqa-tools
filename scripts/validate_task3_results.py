@@ -13,7 +13,7 @@ def read_task3_result_file(file_path, max_answer_length=1200):
     @return: dict of topic ids and results
     """
     result = dict()
-    with open(file_path, newline='') as csv_file:
+    with open(file_path, 'rt', newline='', encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter='\t')
         for line_number, row in enumerate(csv_reader):
             line_number += 1
