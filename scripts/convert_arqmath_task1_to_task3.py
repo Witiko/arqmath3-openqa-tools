@@ -39,7 +39,7 @@ def write_task3_result_file(file_path, result, max_length=1200):
                 print('Warning: Text of answer with ID {} not found in pv211-utils'.format(answer_id))
                 continue
             answer = answers[answer_id].body[:max_length]
-            row = (topic_id, str(rank), str(score), run_id, answer)
+            row = (topic_id, str(rank), str(score), run_id, run_id, answer)
             csv_writer.writerow(row)
             break  # Only use the topmost result as the answer for ARQMath Task 3
 

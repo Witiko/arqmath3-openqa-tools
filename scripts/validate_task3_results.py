@@ -17,7 +17,7 @@ def read_task3_result_file(file_path, max_answer_length=1200):
         csv_reader = csv.reader(csv_file, delimiter='\t')
         for line_number, row in enumerate(csv_reader):
             line_number += 1
-            topic_id, rank, score, run_id, answer = row
+            topic_id, rank, score, run_id, sources, answer = row
             if answer.count('$') % 2 == 1:
                 LOGGER.warning(f'An odd number of dollar signs ($) in answer to topic {topic_id} '
                                f'on line {line_number}. This may indicate invalid TeX code.')
@@ -34,7 +34,7 @@ def read_task3_result_file(file_path, max_answer_length=1200):
                 raise ValueError(f'Topic {topic_id} has at least two different answers, the first '
                                  f'on line {previous_line_number} and the second on line '
                                  f'{line_number}. All topics should only have one answer.')
-            result[topic_id] = (topic_id, rank, score, run_id, answer, line_number)
+            result[topic_id] = (topic_id, rank, score, run_id, sources, answer, line_number)
     return result
 
 
