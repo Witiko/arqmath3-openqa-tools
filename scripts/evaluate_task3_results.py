@@ -54,7 +54,7 @@ def main():
     """
     example: python3 evaluate_task3_results.py -in "Baseline2022-task3-GPT3-auto-both-generate-P.tsv"
                                                -map "teams_document_id.tsv"
-                                               -qrel "qrel_task3_2022_official.tsv"
+                                               -qrel "qrel_task3_2022_official_complete.tsv"
     @return:
     """
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -78,22 +78,34 @@ def main():
 
     map_dict = dict(read_task3_map_file(map_file, run_name))
     qrel_dict = dict(read_task3_qrel_file(qrel_file))
-    input_set = set()
-    for topic_id in read_task3_result_file(input_file):
-        document_id = map_dict[topic_id]
-        input_set.add((topic_id, document_id))
 
     missing_topics = set()
+    input_set = set()
+    for topic_id in read_task3_result_file(input_file):
+        try:
+            document_id = map_dict[topic_id]
+            input_set.add((topic_id, document_id))
+        except KeyError:
+            missing_topics.add(topic_id)
+
+    missing_topics = set()
+    failed_topics = set()
     judgements = []
     for topic_id, document_id in sorted(input_set):
         try:
             judgement = qrel_dict[topic_id, document_id]
-            judgements.append(judgement)
+            if judgement < 4:  # neither "system failure" or "i don't know"
+                judgements.append(judgement)
+            else:
+                failed_topics.add(topic_id)
         except KeyError:
             missing_topics.add(topic_id)
 
-    if missing_topics:
-        LOGGER.warning(f'Results for {len(missing_topics)} topics had no judgements: {sorted(missing_topics)}')
+    if missing_topics or failed_topics:
+        if missing_topics:
+            LOGGER.warning(f'Results for {len(missing_topics)} topics had no judgements: {sorted(missing_topics)}')
+        if failed_topics:
+            LOGGER.warning(f'Results for {len(failed_topics)} topics were rejected by judges: {sorted(failed_topics)}')
         LOGGER.warning(f'Running the evaluation using just {len(judgements)} topics')
 
     average_relevance = mean(float(judgement) for judgement in judgements)
