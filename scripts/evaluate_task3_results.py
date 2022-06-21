@@ -94,10 +94,14 @@ def main():
     for topic_id, document_id in sorted(input_set):
         try:
             judgement = qrel_dict[topic_id, document_id]
-            if judgement < 4:  # neither "system failure" or "i don't know"
+            if judgement < 4:  # relevance judgement
                 judgements.append(judgement)
-            else:
+            elif judgement == 5:  # system failure
+                judgements.append(0)
+            elif judgement == 6:  # i don't know
                 failed_topics.add(topic_id)
+            else:
+                raise ValueError(f'Unknown judgement value {judgement}, expected 0-3, 5, or 6')
         except KeyError:
             missing_topics.add(topic_id)
 
