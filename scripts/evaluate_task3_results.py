@@ -89,7 +89,6 @@ def main():
             missing_topics.add(topic_id)
 
     missing_topics = set()
-    failed_topics = set()
     judgements = []
     for topic_id, document_id in sorted(input_set):
         try:
@@ -99,17 +98,14 @@ def main():
             elif judgement == 5:  # system failure
                 judgements.append(0)
             elif judgement == 6:  # i don't know
-                failed_topics.add(topic_id)
+                judgements.append(0)
             else:
                 raise ValueError(f'Unknown judgement value {judgement}, expected 0-3, 5, or 6')
         except KeyError:
             missing_topics.add(topic_id)
 
-    if missing_topics or failed_topics:
-        if missing_topics:
-            LOGGER.warning(f'Results for {len(missing_topics)} topics had no judgements: {sorted(missing_topics)}')
-        if failed_topics:
-            LOGGER.warning(f'Results for {len(failed_topics)} topics were rejected by judges: {sorted(failed_topics)}')
+    if missing_topics:
+        LOGGER.warning(f'Results for {len(missing_topics)} topics had no judgements: {sorted(missing_topics)}')
         LOGGER.warning(f'Running the evaluation using just {len(judgements)} topics')
 
     average_relevance = mean(float(judgement) for judgement in judgements)
