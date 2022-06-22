@@ -26,34 +26,34 @@ def read_task3_map_file(file_path, expected_run_name):
     Reading map file from topic IDs and run names to document IDs for ARQMath Task 3
     @param file_path: file path to input file
     @param expected_run_name: run name of the currently evaluated results
-    @return: iterable of topic ids and document ids
+    @return: iterable of topic ids and answer ids
     """
     with open(file_path, 'rt', newline='', encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter='\t')
         for row in csv_reader:
-            run_name, topic_id, document_id = row
+            run_name, topic_id, answer_id = row
             if run_name == expected_run_name:
-                yield (topic_id, document_id)
+                yield (topic_id, answer_id)
 
 
 def read_task3_qrel_file(file_path):
     """
     Reading input file with relevance judgements for ARQMath Task 3
     @param file_path: file path to input file
-    @return: iterable of topic ids, document ids, and relevance judgements
+    @return: iterable of topic ids, answer ids, and relevance judgements
     """
     with open(file_path, 'rt', newline='', encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter='\t')
         for row in csv_reader:
-            topic_id, _, document_id, relevance_judgement = row
+            topic_id, _, answer_id, relevance_judgement = row
             relevance_judgement = int(relevance_judgement)
-            yield ((topic_id, document_id), relevance_judgement)
+            yield ((topic_id, answer_id), relevance_judgement)
 
 
 def main():
     """
     example: python3 evaluate_task3_results.py -in "Baseline2022-task3-GPT3-auto-both-generate-P.tsv"
-                                               -map "teams_document_id.tsv"
+                                               -map "teams_answer_id.tsv"
                                                -qrel "qrel_task3_2022_official_complete.tsv"
     @return:
     """
@@ -71,8 +71,8 @@ def main():
                         required=True)
 
     args = vars(parser.parse_args())
-    input_file = args['in']
-    run_name = Path(input_file).stem
+    result_file = args['in']
+    run_name = Path(result_file).stem
     map_file = args['map']
     qrel_file = args['qrel']
 
@@ -81,20 +81,20 @@ def main():
 
     missing_topics = set()
     input_set = dict()
-    for topic_id in read_task3_result_file(input_file):
+    for topic_id in read_task3_result_file(result_file):
         try:
-            document_id = map_dict[topic_id]
+            answer_id = map_dict[topic_id]
             if topic_id in input_set:
-                raise ValueError(f'Repeated topic {topic_id} in {input_file}')
-            input_set[topic_id] = document_id
+                raise ValueError(f'Repeated topic {topic_id} in {result_file}')
+            input_set[topic_id] = answer_id
         except KeyError:
             missing_topics.add(topic_id)
 
     missing_topics = set()
     judgements = []
-    for topic_id, document_id in sorted(input_set.items()):
+    for topic_id, answer_id in sorted(input_set.items()):
         try:
-            judgement = qrel_dict[topic_id, document_id]
+            judgement = qrel_dict[topic_id, answer_id]
             if judgement < 4:  # relevance judgement
                 judgements.append(judgement)
             elif judgement == 5:  # system failure
