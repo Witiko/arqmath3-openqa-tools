@@ -59,7 +59,8 @@ def main():
     """
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
-    parser = argparse.ArgumentParser(description='Convert results from ARQMath Task 3')
+    parser = argparse.ArgumentParser(
+        description='Compute Task 3 manual evaluation measures (AR, P@1) for Task 3 results')
     parser.add_argument('-in',
                         help='Input result file in ARQMath format for ARQMath Task 3',
                         required=True)
