@@ -65,10 +65,11 @@ def main():
                         help='Input result file in ARQMath format for ARQMath Task 3',
                         required=True)
     parser.add_argument('-map',
-                        help='Input map file from topic IDs and run IDs to document IDs for ARQMath Task 3',
+                        help='Input map file from topic IDs and run names to synthetic answer IDs for ARQMath Task 3',
                         required=True)
     parser.add_argument('-qrel',
-                        help='Input file with relevance judgements for ARQMath Task 3',
+                        help=('Input file with complete relevance judgements (including 5: system '
+                              'failure and 6: do not know judgements) for ARQMath Task 3'),
                         required=True)
 
     args = vars(parser.parse_args())
