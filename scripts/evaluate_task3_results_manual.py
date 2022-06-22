@@ -81,19 +81,19 @@ def main():
     qrel_dict = dict(read_task3_qrel_file(qrel_file))
 
     missing_topics = set()
-    input_set = dict()
+    result_dict = dict()
     for topic_id in read_task3_result_file(result_file):
         try:
             answer_id = map_dict[topic_id]
-            if topic_id in input_set:
+            if topic_id in result_dict:
                 raise ValueError(f'Repeated topic {topic_id} in {result_file}')
-            input_set[topic_id] = answer_id
+            result_dict[topic_id] = answer_id
         except KeyError:
             missing_topics.add(topic_id)
 
     missing_topics = set()
     judgements = []
-    for topic_id, answer_id in sorted(input_set.items()):
+    for topic_id, answer_id in sorted(result_dict.items()):
         try:
             judgement = qrel_dict[topic_id, answer_id]
             if judgement < 4:  # relevance judgement
