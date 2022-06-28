@@ -75,6 +75,7 @@ def main():
     qrel_file = args['qrel']
 
     result_dict = dict(get_top1_task1_results(result_file))
+    topic_ids = set(topic_id for topic_id, _ in result_dict.items())
     qrel_dict = dict(read_task1_qrel_file(qrel_file))
 
     missing_topics = set()
@@ -84,7 +85,8 @@ def main():
             judgement = qrel_dict[topic_id, answer_id]
             judgements.append(judgement)
         except KeyError:
-            missing_topics.add(topic_id)
+            if topic_id not in topic_ids:
+                missing_topics.add(topic_id)
 
     if missing_topics:
         LOGGER.warning(f'Results for {len(missing_topics)} topics had no judgements: {sorted(missing_topics)}')
