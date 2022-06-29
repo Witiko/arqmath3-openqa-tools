@@ -1,5 +1,6 @@
 import argparse
 from collections import defaultdict
+from itertools import chain
 from functools import lru_cache
 import csv
 import json
@@ -404,7 +405,7 @@ def main():
             all_task3_answers_directory, task3_qrel_file, map_file, excluded_task3_run_ids_set)
 
     all_relevant_answers = defaultdict(lambda: set())
-    for topic_id, answer in zip(all_relevant_task1_answers, all_relevant_task3_answers):
+    for topic_id, answer in chain(all_relevant_task1_answers, all_relevant_task3_answers):
         all_relevant_answers[topic_id].add(answer)
 
     if output_all_relevant_answers_file is not None:
