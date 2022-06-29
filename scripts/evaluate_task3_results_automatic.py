@@ -54,7 +54,7 @@ def convert_task1_answer_id_to_answer(answer_id, data_reader_record, max_answer_
     @param max_answer_length: the maximum length of an answer
     @return: the body text of the answer in text + LaTeX format or None if the answer was too long
     """
-    answer = data_reader_record.post_parser.map_just_answers[answer_id]
+    answer = data_reader_record.post_parser.map_just_answers[int(answer_id)]
     answer_body = answer.body
     try:
         parsed_answer_body = document_fromstring(answer_body)
