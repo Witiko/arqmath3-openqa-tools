@@ -433,15 +433,15 @@ def main():
         LOGGER.warning(f'Results for {len(missing_topics)} topics had no relevant answers: {sorted(missing_topics)}')
         LOGGER.warning(f'Running the evaluation using just {len(result_answers)} topics')
 
-    LOGGER.info(f'Loading the MathBERTa tokenizer')
+    LOGGER.info('Loading the MathBERTa tokenizer')
     tokenizer = AutoTokenizer.from_pretrained('witiko/mathberta', add_prefix_space=True)
 
-    LOGGER.info(f'Loading the MathBERTa model')
+    LOGGER.info('Loading the MathBERTa model')
     bertscorer = BERTScorer(model_type='witiko/mathberta', num_layers=10)
 
     lexical_overlaps = []
     contextual_similarities = []
-    LOGGER.info(f'Computing lexical overlap (LO) and contextual similarity (CS)')
+    LOGGER.info('Computing lexical overlap (LO) and contextual similarity (CS)')
     for topic_id, answer, relevant_answers in result_answers:
         partial_lexical_overlap = compute_lexical_overlap(
             topic_id, answer, relevant_answers, tokenizer)
