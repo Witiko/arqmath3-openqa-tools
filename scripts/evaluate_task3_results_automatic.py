@@ -282,7 +282,7 @@ def compute_contextual_similarity(topic_id, answer, relevant_answers, bertscorer
     @param bertscorer: a bertscorer object for computing the contextual similarity
     @return: contextual similarity
     """
-    *_, best_f1_scores = bertscorer.score([answer], relevant_answers)
+    *_, best_f1_scores = bertscorer.score([answer], sorted(relevant_answers))
     best_f1_score, = best_f1_scores.detach().cpu().tolist()
     return best_f1_score
 
@@ -299,7 +299,7 @@ def compute_lexical_overlap(topic_id, answer, relevant_answers, tokenizer):
     tokenized_answer = tokenize(tokenizer, answer)
     tokenized_relevant_answers = map(lambda answer: tokenize(tokenizer, answer), relevant_answers)
     tokenized_relevant_answers = filter(len, tokenized_relevant_answers)
-    tokenized_relevant_answers = list(tokenized_relevant_answers)
+    tokenized_relevant_answers = sorted(tokenized_relevant_answers)
     if not tokenized_relevant_answers:
         raise ValueError(f'No non-empty relevant answers for topic {topic_id}')
 
