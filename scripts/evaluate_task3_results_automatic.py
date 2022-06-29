@@ -273,45 +273,51 @@ def tokenize(tokenizer, answer):
     return tokens
 
 
-def compute_contextual_similarity(topic_id, answer, relevant_answers, bertscorer):
+def compute_contextual_similarity(result_answers, model='witiko/mathberta'):
     """
-    Computing contextual similarity between an answer and the most similar out of relevant answers
-    @param topic_id: the id of the topic for which the answer was given
-    @param answer: answer body text in text + LaTeX format
-    @param relevant_answers: set of relevant answer body texts in text + LaTeX format
-    @param bertscorer: a bertscorer object for computing the contextual similarity
+    Computing contextual similarity
+    @param result_answers: iterable of token ids, answers, and lists of relevant answers
+    @param model: language model that will tokenize and embed the answers
     @return: contextual similarity
     """
-    *_, best_f1_scores = bertscorer.score([answer], sorted(relevant_answers))
-    best_f1_score, = best_f1_scores.detach().cpu().tolist()
-    return best_f1_score
+    _, answers, all_relevant_answers = zip(*result_answers)
+    all_relevant_answers = list(map(sorted, all_relevant_answers))
+
+    bertscorer = BERTScorer(model_type=model, num_layers=10)
+    *_, best_f1_scores = bertscorer.score(answers, all_relevant_answers)
+    best_f1_scores = best_f1_scores.detach().cpu().tolist()
+    contextual_similarity = mean(best_f1_scores)
+    return contextual_similarity
 
 
-def compute_lexical_overlap(topic_id, answer, relevant_answers, tokenizer):
+def compute_lexical_overlap(result_answers, model='witiko/mathberta'):
     """
     Computing lexical overlap between an answer and the most similar out of relevant answers
-    @param topic_id: the id of the topic for which the answer was given
-    @param answer: answer body text in text + LaTeX format
-    @param relevant_answers: set of relevant answer body texts in text + LaTeX format
-    @param a tokenizer for answer body texts in text + LaTeX format
+    @param result_answers: iterable of token ids, answers, and lists of relevant answers
+    @param model: language model that will tokenize answers
     @return: lexical overlap
     """
-    tokenized_answer = tokenize(tokenizer, answer)
-    tokenized_relevant_answers = map(lambda answer: tokenize(tokenizer, answer), relevant_answers)
-    tokenized_relevant_answers = filter(len, tokenized_relevant_answers)
-    tokenized_relevant_answers = sorted(tokenized_relevant_answers)
-    if not tokenized_relevant_answers:
-        raise ValueError(f'No non-empty relevant answers for topic {topic_id}')
+    tokenizer = AutoTokenizer.from_pretrained(model, add_prefix_space=True)
+    best_f1_scores = []
+    for topic_id, answer, relevant_answers in result_answers:
+        tokenized_answer = tokenize(tokenizer, answer)
+        tokenized_relevant_answers = map(lambda answer: tokenize(tokenizer, answer), relevant_answers)
+        tokenized_relevant_answers = filter(len, tokenized_relevant_answers)
+        tokenized_relevant_answers = sorted(tokenized_relevant_answers)
+        if not tokenized_relevant_answers:
+            raise ValueError(f'No non-empty relevant answers for topic {topic_id}')
 
-    best_f1_score = float('-inf')
-    for tokenized_relevant_answer in tokenized_relevant_answers:
-        intersection = tokenized_answer & tokenized_relevant_answer
-        precision = 1.0 * len(intersection) / len(tokenized_answer)
-        recall = 1.0 * len(intersection) / len(tokenized_relevant_answer)
-        f1_score = 2.0 * precision * recall / (precision + recall)
-        if f1_score > best_f1_score:
-            best_f1_score = f1_score
-    return best_f1_score
+        best_f1_score = float('-inf')
+        for tokenized_relevant_answer in tokenized_relevant_answers:
+            intersection = tokenized_answer & tokenized_relevant_answer
+            precision = 1.0 * len(intersection) / len(tokenized_answer)
+            recall = 1.0 * len(intersection) / len(tokenized_relevant_answer)
+            f1_score = 2.0 * precision * recall / (precision + recall)
+            if f1_score > best_f1_score:
+                best_f1_score = f1_score
+        best_f1_scores.append(best_f1_score)
+    lexical_overlap = mean(best_f1_scores)
+    return lexical_overlap
 
 
 def main():
@@ -427,25 +433,11 @@ def main():
         LOGGER.warning(f'Results for {len(missing_topics)} topics had no relevant answers: {sorted(missing_topics)}')
         LOGGER.warning(f'Running the evaluation using just {len(result_answers)} topics')
 
-    LOGGER.info('Loading the MathBERTa tokenizer')
-    tokenizer = AutoTokenizer.from_pretrained('witiko/mathberta', add_prefix_space=True)
+    LOGGER.info('Computing lexical overlap (LO)')
+    lexical_overlap = compute_lexical_overlap(result_answers)
 
-    LOGGER.info('Loading the MathBERTa model')
-    bertscorer = BERTScorer(model_type='witiko/mathberta', num_layers=10)
-
-    lexical_overlaps = []
-    contextual_similarities = []
-    LOGGER.info('Computing lexical overlap (LO) and contextual similarity (CS)')
-    for topic_id, answer, relevant_answers in result_answers:
-        partial_lexical_overlap = compute_lexical_overlap(
-            topic_id, answer, relevant_answers, tokenizer)
-        partial_contextual_similarity = compute_contextual_similarity(
-            topic_id, answer, relevant_answers, bertscorer)
-        lexical_overlaps.append(partial_lexical_overlap)
-        contextual_similarities.append(partial_contextual_similarity)
-
-    lexical_overlap = mean(lexical_overlaps)
-    contextual_similarity = mean(contextual_similarities)
+    LOGGER.info('Computing contextual similarity (CS)')
+    contextual_similarity = compute_contextual_similarity(result_answers)
 
     print(f'LO: {lexical_overlap:.3f}')
     print(f'CS: {contextual_similarity:.3f}')
