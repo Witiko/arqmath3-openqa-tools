@@ -1,3 +1,4 @@
+import argparse
 from collections import defaultdict
 import csv
 import logging
@@ -34,7 +35,7 @@ def convert_task1_answer_id_to_answer(answer_id, data_reader_record):
     @param data_reader_record: ARQMathCode data reader
     @return the body text of the answer in text + LaTeX format
     """
-    answer = documents_text_reader.post_parser.map_just_answers[answer_id]
+    answer = data_reader_record.post_parser.map_just_answers[answer_id]
     answer_body = answer.body
     try:
         parsed_answer_body = document_fromstring(answer_body)
@@ -63,7 +64,7 @@ def read_task1_qrel_file(file_path):
             yield ((topic_id, document_id), relevance_judgement)
 
 
-def get_relevant_task1_answers(all_answers_directory, task1_qrel_file, data_reader_record):
+def get_relevant_task1_answers(all_answers_directory, qrel_file, data_reader_record):
     """
     Reading all relevant answers for ARQMath-3 Task 1 topics
     @param all_answers_directory: Input directory with all runs for ARQMath-3 Task 1
@@ -79,7 +80,7 @@ def get_relevant_task1_answers(all_answers_directory, task1_qrel_file, data_read
         raise ValueError(f'No Task 1 result files found in directory {all_answers_directory}')
 
     relevant_answer_ids = set()
-    for result_file in result_files:
+    for result_file in all_result_files:
         for topic_id, answer_id, *_ in read_task1_result_file(result_file):
             try:
                 judgement = qrel_dict[topic_id, answer_id]
@@ -150,8 +151,7 @@ def get_relevant_task3_answers(all_answers_directory, qrel_file, map_file):
     if not all_result_files:
         raise ValueError(f'No Task 3 result files found in directory {all_answers_directory}')
 
-    relevant_answer_ids = set()
-    for result_file in result_files:
+    for result_file in all_result_files:
         run_name = Path(result_file).stem
         map_dict = dict(read_task3_map_file(map_file, run_name))
         result_set = set()
@@ -232,7 +232,7 @@ def main():
     for topic_id, answer in zip(relevant_task1_answers, relevant_task3_answers):
         relevant_answers[topic_id].add(answer)
 
-    result_task3_answers = read_task3_result_file(result_file)
+    result_task3_answers = read_task3_result_file(result_file)  # noqa: F841
 
 
 if __name__ == "__main__":
