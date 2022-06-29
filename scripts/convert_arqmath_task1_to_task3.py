@@ -22,7 +22,7 @@ def read_task1_result_file(file_path):
 
 def write_task3_result_file(file_path, result, max_length=1200):
     """
-    Reading input file in ARQMath format for ARQMath Task 3
+    Writing input file in ARQMath format for ARQMath Task 3
     @param file_path: file path to output file
     @param result: dict of topic ids and results. results is dict of answer ids, ranks, scores, and run identifiers
     @param max_length: maximum number of unicode characters in an answer for ARQMath Task 3

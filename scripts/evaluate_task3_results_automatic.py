@@ -169,6 +169,20 @@ def get_relevant_task3_answers(all_answers_directory, qrel_file, map_file):
                 pass
 
 
+def write_all_relevant_answers(all_relevant_answers, file_path):
+    """
+    Writing relevant answers to an output file
+    @param all_relevant_answers: dict of topic_ids and lists of answer body texts in text + LaTeX format
+    @param file_path: file path to output file
+    @return:
+    """
+    csv_writer = csv.writer(result_file, delimiter='\t', quoting=csv.QUOTE_MINIMAL)
+    for topic_id, relevant_answers in sorted(all_relevant_answers):
+        for relevant_answer in relevant_answers:
+            row = (topic_id, relevant_answer)
+            csv_writer.writerow(row)
+
+
 def main():
     """
     example: pip install lxml beautifulsoup4 git+https://github.com/MIR-MU/ARQMathCode.git
@@ -180,12 +194,13 @@ def main():
                -map "teams_answer_id.tsv"
                -task1_qrel "qrel_task1_2022_official.tsv"
                -task3_qrel "qrel_task3_2022_official_complete.tsv"
+               -relevant_answer_dump "relevant_answers.txt"
     @return:
     """
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
     parser = argparse.ArgumentParser(
-        description='Compute Task 3 automatic evaluation measures (LS, CS) for Task 3 results')
+        description='Compute Task 3 automatic evaluation measures (LO, CS) for Task 3 results')
     parser.add_argument('-all_task1_answers',
                         help=('Input directory with all runs for ARQMath-3 Task 1 except runs '
                               'from the same team whose run we are evaluating'),
@@ -211,6 +226,11 @@ def main():
                         help=('Input file with complete relevance judgements (including 5: system '
                               'failure and 6: do not know judgements) for ARQMath-3 Task 3'),
                         required=True)
+    parser.add_argument('-relevant_answer_dump',
+                        help=('Output file with all H+M anwers for ARQMath-3 Task 1 and ARQMath-3 '
+                              'Task 3 in TSV format with topic ids and relevant answer texts. '
+                              'Optional, but useful for debugging.'),
+                        required=False)
 
     args = vars(parser.parse_args())
     all_task1_answers_directory = args['all_task1_answers']
@@ -220,19 +240,21 @@ def main():
     map_file = args['map']
     task1_qrel_file = args['task1_qrel']
     task3_qrel_file = args['task3_qrel']
+    output_all_relevant_answers_file = args['relevant_answer_dump']
 
     data_reader_record = DataReaderRecord(collection_directory)
 
-    relevant_task1_answers = get_relevant_task1_answers(
+    all_relevant_task1_answers = get_relevant_task1_answers(
             all_task1_answers_directory, task1_qrel_file, data_reader_record)
-    relevant_task3_answers = get_relevant_task3_answers(
+    all_relevant_task3_answers = get_relevant_task3_answers(
             all_task3_answers_directory, task3_qrel_file, map_file)
 
-    relevant_answers = defaultdict(lambda: set())
+    all_relevant_answers = defaultdict(lambda: set())
     for topic_id, answer in zip(relevant_task1_answers, relevant_task3_answers):
-        relevant_answers[topic_id].add(answer)
+        all_relevant_answers[topic_id].add(answer)
 
-    result_task3_answers = read_task3_result_file(result_file)  # noqa: F841
+    if output_all_relevant_answers_file is not None:
+        write_all_relevant_answers(all_relevant_answers, output_all_relevant_answers_file)
 
 
 if __name__ == "__main__":
