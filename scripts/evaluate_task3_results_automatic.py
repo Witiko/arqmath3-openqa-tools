@@ -223,7 +223,7 @@ def main():
                -map "teams_answer_id.tsv"
                -task1_qrel "qrel_task1_2022_official.tsv"
                -task3_qrel "qrel_task3_2022_official_complete.tsv"
-               -relevant_answer_dump "relevant_answers.txt"
+               -relevant_answer_dump "relevant_answers.tsv"
     @return:
     """
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
