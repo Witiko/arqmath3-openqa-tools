@@ -86,9 +86,9 @@ def main():
     result_dict = dict()
     for topic_id in read_task3_result_file(result_file):
         try:
-            answer_id = map_dict[topic_id]
             if topic_id in result_dict:
                 raise ValueError(f'Repeated topic {topic_id} in {result_file}')
+            answer_id = map_dict[topic_id]
             result_dict[topic_id] = answer_id
         except KeyError:
             missing_topics.add(topic_id)
