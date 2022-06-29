@@ -158,7 +158,8 @@ def read_task3_result_file(file_path, max_answer_length=1200):
     """
     with open(file_path, 'rt', newline='', encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter='\t')
-        for row in csv_reader:
+        for line_number, row in enumerate(csv_reader):
+            line_number += 1
             topic_id, _, __, run_id, ___, answer_body_text = row
             if len(answer_body_text) > max_answer_length:
                 raise ValueError(f'Answer to topic {topic_id} on line {line_number} contains '
