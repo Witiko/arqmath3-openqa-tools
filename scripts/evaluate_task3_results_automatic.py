@@ -327,7 +327,7 @@ def main():
              python3 evaluate_task3_results_automatic.py
                -all_task1_answers "task1_arqmath3_runs/"
                -all_task3_answers "task3_arqmath3_runs/"
-               -excluded_run_ids "['GPT3']"
+               -excluded_run_ids '["GPT3"]'
                -collection "collection/"
                -in "Baseline2022-task3-GPT3-auto-both-generate-P.tsv"
                -map "teams_answer_id.tsv"
