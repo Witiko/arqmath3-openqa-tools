@@ -31,12 +31,26 @@ def read_task1_result_file(file_path):
             yield (topic_id, answer_id, rank, score)
 
 
+def normalize_answer_text(answer):
+    """
+    Normalizing the body text of an answer in text + LaTeX format
+    @param answer: answer body text in text + LaTeX format
+    @return: the normalized answer body text in text + LaTeX format
+    """
+    answer = answer.rstrip()
+    if not answer.startswith(' [MATH]'):
+        answer = answer.lstrip()
+    answer = re.sub(r' \[/MATH\] \[MATH\] ', ' ', answer)
+    answer = re.sub(r' \[/MATH\]$', '', answer)
+    return answer
+
+
 def convert_task1_answer_id_to_answer(answer_id, data_reader_record):
     """
     Converting answer ids to answer bodies in text + LaTeX format
     @param answer_id: id of the answer
     @param data_reader_record: ARQMathCode data reader
-    @return the body text of the answer in text + LaTeX format
+    @return: the body text of the answer in text + LaTeX format
     """
     answer = data_reader_record.post_parser.map_just_answers[answer_id]
     answer_body = answer.body
@@ -49,11 +63,7 @@ def convert_task1_answer_id_to_answer(answer_id, data_reader_record):
         math_tokens = math_element.text
         math_element.text = f' [MATH] {math_tokens} [/MATH] '
     answer_body_text = parsed_answer_body.text_content()
-    answer_body_text = answer_body_text.rstrip()
-    if not answer_body_text.startswith(' [MATH]'):
-        answer_body_text = answer_body_text.lstrip()
-    answer_body_text = re.sub(r' \[/MATH\] \[MATH\] ', ' ', answer_body_text)
-    answer_body_text = re.sub(r' \[/MATH\]$', '', answer_body_text)
+    answer_body_text = normalize_answer_text(answer_body_text)
     return answer_body_text
 
 
@@ -101,6 +111,32 @@ def get_relevant_task1_answers(all_answers_directory, qrel_file, data_reader_rec
         yield (topic_id, answer_body_text)
 
 
+def replace_dollars_with_math_tags(answer):
+    """
+    Replacing dollar signs with [MATH] and [/MATH] tags in the body text of an answer in text + LaTeX format
+    @param answer: answer body text in text + LaTeX format
+    @return: the answer body text in text + LaTeX format after the replacement or None if malformed
+    """
+    dollar_regex = r'(?:^|[^\\])\$'
+
+    if len(re.findall(dollar_regex, answer)) % 2 == 1:
+        return None
+
+    is_start_tag = True
+
+    def replace_dollar_with_math_tag(match):
+        nonlocal is_start_tag
+        if is_start_tag:
+            replacement = ' [MATH] '
+        else:
+            replacement = ' [/MATH] '
+        is_start_tag = not is_start_tag
+        return replacement
+
+    answer = re.sub(dollar_regex, replace_dollar_with_math_tag, answer)
+    return answer
+
+
 def read_task3_result_file(file_path):
     """
     Reading input results file in ARQMath format for ARQMath-3 Task 3
@@ -109,8 +145,15 @@ def read_task3_result_file(file_path):
     """
     with open(file_path, 'rt', newline='', encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter='\t')
-        for row in csv_reader:
+        for line_number, row in enumerate(csv_reader):
+            line_number += 1
             topic_id, *_, answer_body_text = row
+            answer_body_text = replace_dollars_with_math_tags(answer_body_text)
+            if answer_body_text is None:
+                LOGGER.warning(f'Found an odd number of dollar signs ($) in answer to topic {topic_id} '
+                               f'on line {line_number} from run file {file_path}. Skipping.')
+                continue
+            answer_body_text = normalize_answer_text(answer_body_text)
             yield topic_id, answer_body_text
 
 
@@ -163,11 +206,10 @@ def get_relevant_task3_answers(all_answers_directory, qrel_file, map_file):
         map_dict = dict(read_task3_map_file(map_file, run_name))
         result_set = set()
         for topic_id, answer_body_text in read_task3_result_file(result_file):
+            if topic_id in result_set:
+                raise ValueError(f'Repeated topic {topic_id} in {result_file}')
+            result_set.add(topic_id)
             try:
-                if topic_id in result_set:
-                    raise ValueError(f'Repeated topic {topic_id} in {result_file}')
-                result_set.add(topic_id)
-
                 answer_id = map_dict[topic_id]
                 judgement = qrel_dict[topic_id, answer_id]
                 if judgement not in {0, 1, 2, 3, 5, 6}:
