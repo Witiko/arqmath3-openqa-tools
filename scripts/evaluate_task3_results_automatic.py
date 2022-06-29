@@ -297,8 +297,8 @@ def main():
     for answer, relevant_answers in result_answers:
         partial_lexical_overlap = compute_lexical_overlap(answer, relevant_answers)
         partial_contextual_similarity = compute_contextual_similarity(answer, relevant_answers)
-        lexical_overlaps.add(partial_lexical_overlap)
-        contextual_similarities.add(partial_contextual_similarity)
+        lexical_overlaps.append(partial_lexical_overlap)
+        contextual_similarities.append(partial_contextual_similarity)
 
     lexical_overlap = mean(lexical_overlaps)
     contextual_similarity = mean(contextual_similarities)
