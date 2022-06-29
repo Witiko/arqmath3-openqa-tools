@@ -390,10 +390,13 @@ def main():
     excluded_run_ids_set = set(json.loads(excluded_run_ids))
     LOGGER.info(f'Excluded run ids: {sorted(excluded_run_ids_set)}')
 
+    LOGGER.info(f'Loading ARQMath collection from {collection_directory}')
     data_reader_record = DataReaderRecord(collection_directory)
 
+    LOGGER.info(f'Collecting all relevant Task 1 answers from {all_task1_answers_directory}')
     all_relevant_task1_answers = get_relevant_task1_answers(
             all_task1_answers_directory, task1_qrel_file, data_reader_record, excluded_run_ids_set)
+    LOGGER.info(f'Collecting all relevant Task 3 answers from {all_task1_answers_directory}')
     all_relevant_task3_answers = get_relevant_task3_answers(
             all_task3_answers_directory, task3_qrel_file, map_file, excluded_run_ids_set)
 
@@ -402,10 +405,12 @@ def main():
         all_relevant_answers[topic_id].add(answer)
 
     if output_all_relevant_answers_file is not None:
+        LOGGER.info(f'Writing all relevant answers to {output_all_relevant_answers_file}')
         write_all_relevant_answers(all_relevant_answers, output_all_relevant_answers_file)
 
     result_answers = []
     missing_topics = set()
+    LOGGER.info(f'Reading result file {result_file}')
     for topic_id, _, answer in read_task3_result_file(result_file):
         try:
             relevant_answers = all_relevant_answers[topic_id]
@@ -417,11 +422,15 @@ def main():
         LOGGER.warning(f'Results for {len(missing_topics)} topics had no relevant answers: {sorted(missing_topics)}')
         LOGGER.warning(f'Running the evaluation using just {len(result_answers)} topics')
 
+    LOGGER.info(f'Loading the MathBERTa tokenizer')
     tokenizer = AutoTokenizer.from_pretrained('witiko/mathberta', add_prefix_space=True)
+
+    LOGGER.info(f'Loading the MathBERTa model')
     bertscorer = BERTScorer(model_type='witiko/mathberta', num_layers=10)
 
     lexical_overlaps = []
     contextual_similarities = []
+    LOGGER.info(f'Computing lexical overlap (LO) and contextual similarity (CS)')
     for topic_id, answer, relevant_answers in result_answers:
         partial_lexical_overlap = compute_lexical_overlap(
             topic_id, answer, relevant_answers, tokenizer)
