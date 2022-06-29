@@ -294,8 +294,8 @@ def compute_lexical_overlap(topic_id, answer, relevant_answers, tokenizer):
     @param a tokenizer for answer body texts in text + LaTeX format
     @return: lexical overlap
     """
-    tokenized_answer = tokenize(answer)
-    tokenized_relevant_answers = map(tokenize, relevant_answers)
+    tokenized_answer = tokenize(tokenizer, answer)
+    tokenized_relevant_answers = map(lambda answer: tokenize(tokenizer, answer), relevant_answers)
     tokenized_relevant_answers = filter(len, tokenized_relevant_answers)
     tokenized_relevant_answers = set(tokenized_relevant_answers)
     if not tokenized_relevant_answers:
