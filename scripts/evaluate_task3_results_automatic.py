@@ -134,7 +134,7 @@ def replace_dollars_with_math_tags(answer):
     @param answer: answer body text in text + LaTeX format
     @return: the answer body text in text + LaTeX format after the replacement or None if malformed
     """
-    dollar_regex = r'(?:^|[^\\])\$'
+    dollar_regex = r'(?:^|\\\\|[^\\])\$'
 
     if len(re.findall(dollar_regex, answer)) % 2 == 1:
         return None

@@ -19,7 +19,7 @@ def read_task3_result_file(file_path, max_answer_length=1200):
         for line_number, row in enumerate(csv_reader):
             line_number += 1
             topic_id, rank, score, run_id, sources, answer = row
-            if len(re.findall(r'(?:^|[^\\])\$', answer)) % 2 == 1:
+            if len(re.findall(r'(?:^|\\\\|[^\\])\$', answer)) % 2 == 1:
                 LOGGER.warning(f'An odd number of dollar signs ($) in answer to topic {topic_id} '
                                f'on line {line_number}. This may indicate invalid TeX code.')
             if len(answer) > max_answer_length:
