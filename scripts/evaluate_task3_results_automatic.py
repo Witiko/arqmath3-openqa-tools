@@ -391,7 +391,7 @@ def main():
     LOGGER.info(f'Excluded run ids: {sorted(excluded_run_ids_set)}')
 
     LOGGER.info(f'Loading ARQMath collection from {collection_directory}')
-    data_reader_record = DataReaderRecord(collection_directory)
+    data_reader_record = DataReaderRecord(collection_directory, version='.V1.3')
 
     LOGGER.info(f'Collecting all relevant Task 1 answers from {all_task1_answers_directory}')
     all_relevant_task1_answers = get_relevant_task1_answers(
