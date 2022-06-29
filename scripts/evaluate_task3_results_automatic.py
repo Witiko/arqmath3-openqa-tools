@@ -308,10 +308,9 @@ def compute_lexical_overlap(topic_id, answer, relevant_answers, tokenizer):
     best_f1_score = float('-inf')
     for tokenized_relevant_answer in tokenized_relevant_answers:
         intersection = tokenized_answer & tokenized_relevant_answer
-        union = tokenized_answer | tokenized_relevant_answer
         precision = 1.0 * len(intersection) / len(tokenized_answer)
         recall = 1.0 * len(intersection) / len(tokenized_relevant_answer)
-        f1_score = 2 * precision * recall / (precision + recall)
+        f1_score = 2.0 * precision * recall / (precision + recall)
         if f1_score > best_f1_score:
             best_f1_score = f1_score
     return best_f1_score
@@ -319,7 +318,8 @@ def compute_lexical_overlap(topic_id, answer, relevant_answers, tokenizer):
 
 def main():
     """
-    example: pip install lxml beautifulsoup4 transformers>=4.20.0 bert-score==0.3.11 git+https://github.com/MIR-MU/ARQMathCode.git
+    example: pip install lxml beautifulsoup4 transformers>=4.20.0 bert-score==0.3.11
+             pip install git+https://github.com/MIR-MU/ARQMathCode.git
              python3 evaluate_task3_results_automatic.py
                -all_task1_answers "task1_arqmath3_runs/"
                -all_task3_answers "task3_arqmath3_runs/"
@@ -417,7 +417,7 @@ def main():
 
     lexical_overlaps = []
     contextual_similarities = []
-    for topic_id, answer, relevant_answers in tokenized_result_answers:
+    for topic_id, answer, relevant_answers in result_answers:
         partial_lexical_overlap = compute_lexical_overlap(topic_id, answer, relevant_answers, tokenizer)
         partial_contextual_similarity = compute_contextual_similarity(topic_id, answer, relevant_answers)
         lexical_overlaps.append(partial_lexical_overlap)
