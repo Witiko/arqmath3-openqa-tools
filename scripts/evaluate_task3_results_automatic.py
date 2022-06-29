@@ -179,7 +179,7 @@ def write_all_relevant_answers(all_relevant_answers, file_path):
     @param file_path: file path to output file
     @return:
     """
-    csv_writer = csv.writer(result_file, delimiter='\t', quoting=csv.QUOTE_MINIMAL)
+    csv_writer = csv.writer(file_path, delimiter='\t', quoting=csv.QUOTE_MINIMAL)
     for topic_id, relevant_answers in sorted(all_relevant_answers):
         for relevant_answer in relevant_answers:
             row = (topic_id, relevant_answer)
@@ -273,7 +273,7 @@ def main():
             all_task3_answers_directory, task3_qrel_file, map_file)
 
     all_relevant_answers = defaultdict(lambda: set())
-    for topic_id, answer in zip(relevant_task1_answers, relevant_task3_answers):
+    for topic_id, answer in zip(all_relevant_task1_answers, all_relevant_task3_answers):
         all_relevant_answers[topic_id].add(answer)
 
     if output_all_relevant_answers_file is not None:
@@ -289,7 +289,7 @@ def main():
             missing_topics.add(topic_id)
 
     if missing_topics:
-        LOGGER.warning(f'Results for {len(missing_topics)} topics had no H+M answers: {sorted(missing_topics)}')
+        LOGGER.warning(f'Results for {len(missing_topics)} topics had no relevant answers: {sorted(missing_topics)}')
         LOGGER.warning(f'Running the evaluation using just {len(result_answers)} topics')
 
     lexical_overlaps = []
@@ -300,7 +300,7 @@ def main():
         lexical_overlaps.add(partial_lexical_overlap)
         contextual_similarities.add(partial_contextual_similarity)
 
-    lexical_overlap = mean(lexical_similarities)
+    lexical_overlap = mean(lexical_overlaps)
     contextual_similarity = mean(contextual_similarities)
 
     print(f'LO: {lexical_overlap:.3f}')
