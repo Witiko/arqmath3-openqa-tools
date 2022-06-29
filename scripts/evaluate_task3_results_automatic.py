@@ -44,7 +44,7 @@ def convert_task1_answer_id_to_answer(answer_id, data_reader_record):
         parsed_answer_body = document_fromstring(answer_body)
     for math_element in parsed_answer_body.xpath('//span[@class = "math-container"]'):
         math_tokens = math_element.text
-        math_element.text = f'${math_tokens}$'
+        math_element.text = f' [MATH] {math_tokens} [/MATH] '
     answer_body_text = parsed_answer_body.text_content()
     answer_body_text = answer_body_text.strip()
     return answer_body_text
