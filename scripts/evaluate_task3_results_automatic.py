@@ -299,7 +299,7 @@ def compute_lexical_overlap(topic_id, answer, relevant_answers, tokenizer):
     tokenized_answer = tokenize(tokenizer, answer)
     tokenized_relevant_answers = map(lambda answer: tokenize(tokenizer, answer), relevant_answers)
     tokenized_relevant_answers = filter(len, tokenized_relevant_answers)
-    tokenized_relevant_answers = set(tokenized_relevant_answers)
+    tokenized_relevant_answers = list(tokenized_relevant_answers)
     if not tokenized_relevant_answers:
         raise ValueError(f'No non-empty relevant answers for topic {topic_id}')
 
