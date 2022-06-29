@@ -1,5 +1,6 @@
 import argparse
 from collections import defaultdict
+from functools import lru_cache
 import csv
 import json
 import logging
@@ -264,24 +265,56 @@ def write_all_relevant_answers(all_relevant_answers, file_path):
             csv_writer.writerow(row)
 
 
-def compute_contextual_similarity(answer, relevant_answers):
+@lru_cache(maxsize=None)
+def tokenize(tokenizer, answer):
+    """
+    Tokenizing an answer body text in text + LaTeX format
+    @param a tokenizer for answer body texts in text + LaTeX format
+    @param answer: answer body text in text + LaTeX format
+    @return: set of tokens
+    """
+    tokens = tokenizer.tokenize(answer)
+    tokens = set(tokens)
+    return tokens
+
+
+def compute_contextual_similarity(topic_id, answer, relevant_answers):
     """
     Computing contextual similarity between an answer and the most similar out of relevant answers
+    @param topic_id: the id of the topic for which the answer was given
     @param answer: answer body text in text + LaTeX format
-    @param relevant_answers: set of answer body texts in text + LaTeX format
+    @param relevant_answers: set of relevant answer body texts in text + LaTeX format
     @return: contextual similarity
     """
     return 1.0  # TODO
 
 
-def compute_lexical_overlap(answer, relevant_answers):
+def compute_lexical_overlap(topic_id, answer, relevant_answers, tokenizer):
     """
     Computing lexical overlap between an answer and the most similar out of relevant answers
+    @param topic_id: the id of the topic for which the answer was given
     @param answer: answer body text in text + LaTeX format
-    @param relevant_answers: set of answer body texts in text + LaTeX format
+    @param relevant_answers: set of relevant answer body texts in text + LaTeX format
+    @param a tokenizer for answer body texts in text + LaTeX format
     @return: lexical overlap
     """
-    return 1.0  # TODO
+    tokenized_answer = tokenize(answer)
+    tokenized_relevant_answers = map(tokenize, relevant_answers)
+    tokenized_relevant_answers = filter(len, tokenized_relevant_answers)
+    tokenized_relevant_answers = set(tokenized_relevant_answers)
+    if not tokenized_relevant_answers:
+        raise ValueError(f'No non-empty relevant answers for topic {topic_id}')
+
+    best_f1_score = float('-inf')
+    for tokenized_relevant_answer in tokenized_relevant_answers:
+        intersection = tokenized_answer & tokenized_relevant_answer
+        union = tokenized_answer | tokenized_relevant_answer
+        precision = 1.0 * len(intersection) / len(tokenized_answer)
+        recall = 1.0 * len(intersection) / len(tokenized_relevant_answer)
+        f1_score = 2 * precision * recall / (precision + recall)
+        if f1_score > best_f1_score:
+            best_f1_score = f1_score
+    return best_f1_score
 
 
 def main():
@@ -372,7 +405,7 @@ def main():
     for topic_id, _, answer in read_task3_result_file(result_file):
         try:
             relevant_answers = all_relevant_answers[topic_id]
-            result_answers.append((answer, relevant_answers))
+            result_answers.append((topic_id, answer, relevant_answers))
         except KeyError:
             missing_topics.add(topic_id)
 
@@ -380,13 +413,13 @@ def main():
         LOGGER.warning(f'Results for {len(missing_topics)} topics had no relevant answers: {sorted(missing_topics)}')
         LOGGER.warning(f'Running the evaluation using just {len(result_answers)} topics')
 
-    tokenizer = AutoTokenizer.from_pretrained('witiko/mathberta', add_prefix_space=True)  # noqa
+    tokenizer = AutoTokenizer.from_pretrained('witiko/mathberta', add_prefix_space=True)
 
     lexical_overlaps = []
     contextual_similarities = []
-    for answer, relevant_answers in result_answers:
-        partial_lexical_overlap = compute_lexical_overlap(answer, relevant_answers)
-        partial_contextual_similarity = compute_contextual_similarity(answer, relevant_answers)
+    for topic_id, answer, relevant_answers in tokenized_result_answers:
+        partial_lexical_overlap = compute_lexical_overlap(topic_id, answer, relevant_answers, tokenizer)
+        partial_contextual_similarity = compute_contextual_similarity(topic_id, answer, relevant_answers)
         lexical_overlaps.append(partial_lexical_overlap)
         contextual_similarities.append(partial_contextual_similarity)
 
