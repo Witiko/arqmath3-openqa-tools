@@ -10,6 +10,7 @@ from arqmathcode.post_reader_record import DataReaderRecord
 from lxml import etree
 from lxml.html import document_fromstring
 from bs4 import BeautifulSoup
+from transformers import AutoTokenizer
 
 
 LOGGER = logging.getLogger(__name__)
@@ -213,7 +214,7 @@ def compute_lexical_overlap(answer, relevant_answers):
 
 def main():
     """
-    example: pip install lxml beautifulsoup4 git+https://github.com/MIR-MU/ARQMathCode.git
+    example: pip install lxml beautifulsoup4 transformers>=4.20.0 git+https://github.com/MIR-MU/ARQMathCode.git
              python3 evaluate_task3_results_automatic.py
                -all_task1_answers "task1_arqmath3_runs/"
                -all_task3_answers "task3_arqmath3_runs_without_GPT3/"
@@ -296,6 +297,8 @@ def main():
     if missing_topics:
         LOGGER.warning(f'Results for {len(missing_topics)} topics had no relevant answers: {sorted(missing_topics)}')
         LOGGER.warning(f'Running the evaluation using just {len(result_answers)} topics')
+
+    tokenizer = AutoTokenizer.from_pretrained('witiko/mathberta', add_prefix_space=True)  # noqa
 
     lexical_overlaps = []
     contextual_similarities = []
