@@ -337,7 +337,7 @@ def main():
                -relevant_answer_dump "relevant_answers.tsv"
     @return:
     """
-    logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 
     parser = argparse.ArgumentParser(
         description='Compute Task 3 automatic evaluation measures (LO, CS) for Task 3 results')
