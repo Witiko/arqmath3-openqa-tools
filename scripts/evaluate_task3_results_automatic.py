@@ -3,6 +3,7 @@ from collections import defaultdict
 import csv
 import logging
 from pathlib import Path
+from statistics import mean
 
 from arqmathcode.post_reader_record import DataReaderRecord
 from lxml import etree
@@ -163,6 +164,8 @@ def get_relevant_task3_answers(all_answers_directory, qrel_file, map_file):
 
                 answer_id = map_dict[topic_id]
                 judgement = qrel_dict[topic_id, answer_id]
+                if judgement not in {0, 1, 2, 3, 5, 6}:
+                    raise ValueError(f'Unknown judgement value {judgement}, expected 0-3, 5, or 6')
                 if judgement > 1 and judgement < 4:
                     yield topic_id, answer_body_text
             except KeyError:
@@ -181,6 +184,26 @@ def write_all_relevant_answers(all_relevant_answers, file_path):
         for relevant_answer in relevant_answers:
             row = (topic_id, relevant_answer)
             csv_writer.writerow(row)
+
+
+def compute_contextual_similarity(answer, relevant_answers):
+    """
+    Computing contextual similarity between an answer and the most similar out of relevant answers
+    @param answer: answer body text in text + LaTeX format
+    @param relevant_answers: set of answer body texts in text + LaTeX format
+    @return: contextual similarity
+    """
+    return 1.0  # TODO
+
+
+def compute_lexical_overlap(answer, relevant_answers):
+    """
+    Computing lexical overlap between an answer and the most similar out of relevant answers
+    @param answer: answer body text in text + LaTeX format
+    @param relevant_answers: set of answer body texts in text + LaTeX format
+    @return: lexical overlap
+    """
+    return 1.0  # TODO
 
 
 def main():
@@ -255,6 +278,33 @@ def main():
 
     if output_all_relevant_answers_file is not None:
         write_all_relevant_answers(all_relevant_answers, output_all_relevant_answers_file)
+
+    result_answers = []
+    missing_topics = set()
+    for topic_id, answer in read_task3_result_file(result_file):
+        try:
+            relevant_answers = all_relevant_answers[topic_id]
+            result_answers.append((answer, relevant_answers))
+        except KeyError:
+            missing_topics.add(topic_id)
+
+    if missing_topics:
+        LOGGER.warning(f'Results for {len(missing_topics)} topics had no H+M answers: {sorted(missing_topics)}')
+        LOGGER.warning(f'Running the evaluation using just {len(result_answers)} topics')
+
+    lexical_overlaps = []
+    contextual_similarities = []
+    for answer, relevant_answers in result_answers:
+        partial_lexical_overlap = compute_lexical_overlap(answer, relevant_answers)
+        partial_contextual_similarity = compute_contextual_similarity(answer, relevant_answers)
+        lexical_overlaps.add(partial_lexical_overlap)
+        contextual_similarities.add(partial_contextual_similarity)
+
+    lexical_overlap = mean(lexical_similarities)
+    contextual_similarity = mean(contextual_similarities)
+
+    print(f'LO: {lexical_overlap:.3f}')
+    print(f'CS: {contextual_similarity:.3f}')
 
 
 if __name__ == "__main__":
