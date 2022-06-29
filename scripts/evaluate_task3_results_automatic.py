@@ -132,13 +132,8 @@ def replace_dollars_with_math_tags(answer):
     """
     Replacing dollar signs with [MATH] and [/MATH] tags in the body text of an answer in text + LaTeX format
     @param answer: answer body text in text + LaTeX format
-    @return: the answer body text in text + LaTeX format after the replacement or None if malformed
+    @return: the answer body text in text + LaTeX format after the replacement
     """
-    dollar_regex = r'(?:^|\\\\|[^\\])\$'
-
-    if len(re.findall(dollar_regex, answer)) % 2 == 1:
-        return None
-
     is_start_tag = True
 
     def replace_dollar_with_math_tag(match):
@@ -150,7 +145,7 @@ def replace_dollars_with_math_tags(answer):
         is_start_tag = not is_start_tag
         return replacement
 
-    answer = re.sub(dollar_regex, replace_dollar_with_math_tag, answer)
+    answer = re.sub(r'(?:^|\\\\|[^\\])\$', replace_dollar_with_math_tag, answer)
     return answer
 
 
@@ -163,18 +158,13 @@ def read_task3_result_file(file_path, max_answer_length=1200):
     """
     with open(file_path, 'rt', newline='', encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter='\t')
-        for line_number, row in enumerate(csv_reader):
-            line_number += 1
+        for row in csv_reader:
             topic_id, _, __, run_id, ___, answer_body_text = row
             if len(answer_body_text) > max_answer_length:
                 raise ValueError(f'Answer to topic {topic_id} on line {line_number} contains '
                                  f'{len(answer_body_text)} Unicode characters, but at most '
                                  f'{max_answer_length} were expected.')
             answer_body_text = replace_dollars_with_math_tags(answer_body_text)
-            if answer_body_text is None:
-                LOGGER.warning(f'Found an odd number of dollar signs ($) in answer to topic {topic_id} '
-                               f'on line {line_number} from run file {file_path}. Skipping.')
-                continue
             answer_body_text = normalize_answer_text(answer_body_text)
             yield topic_id, run_id, answer_body_text
 
