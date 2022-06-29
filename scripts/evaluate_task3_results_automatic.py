@@ -111,8 +111,10 @@ def get_relevant_task1_answers(all_answers_directory, qrel_file, data_reader_rec
 
     relevant_answer_ids = set()
     answer_run_ids = defaultdict(lambda: set())
+    seen_excluded_run_ids = set()
     for result_file in all_result_files:
         for topic_id, answer_id, run_id in read_task1_result_file(result_file):
+            seen_excluded_run_ids.add(run_id)
             try:
                 judgement = qrel_dict[topic_id, answer_id]
                 if judgement > 1:
@@ -120,6 +122,10 @@ def get_relevant_task1_answers(all_answers_directory, qrel_file, data_reader_rec
                     relevant_answer_ids.add((topic_id, answer_id))
             except KeyError:
                 pass
+
+    if excluded_run_ids - seen_excluded_run_ids:
+        raise ValueError(f'Excluded Task 1 run ids {excluded_run_ids - seen_excluded_run_ids} '
+                         'never seen in all Task 1 answers. Perhaps a typo?')
 
     for topic_id, answer_id in relevant_answer_ids:
         run_ids = answer_run_ids[topic_id, answer_id]
@@ -219,11 +225,13 @@ def get_relevant_task3_answers(all_answers_directory, qrel_file, map_file, exclu
 
     relevant_answers = set()
     answer_run_ids = defaultdict(lambda: set())
+    seen_excluded_run_ids = set()
     for result_file in all_result_files:
         run_name = Path(result_file).stem
         map_dict = dict(read_task3_map_file(map_file, run_name))
         result_set = set()
         for topic_id, run_id, answer_body_text in read_task3_result_file(result_file):
+            seen_excluded_run_ids.add(run_id)
             if topic_id in result_set:
                 raise ValueError(f'Repeated topic {topic_id} in {result_file}')
             result_set.add(topic_id)
@@ -237,6 +245,10 @@ def get_relevant_task3_answers(all_answers_directory, qrel_file, map_file, exclu
                     relevant_answers.add((topic_id, answer_body_text))
             except KeyError:
                 pass
+
+    if excluded_run_ids - seen_excluded_run_ids:
+        raise ValueError(f'Excluded Task 3 run ids {excluded_run_ids - seen_excluded_run_ids} '
+                         'never seen in all Task 3 answers. Perhaps a typo?')
 
     for topic_id, answer_body_text in relevant_answers:
         run_ids = answer_run_ids[topic_id, answer_body_text]
