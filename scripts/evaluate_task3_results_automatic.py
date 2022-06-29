@@ -319,7 +319,7 @@ def compute_lexical_overlap(topic_id, answer, relevant_answers, tokenizer):
 
 def main():
     """
-    example: pip install lxml beautifulsoup4 transformers>=4.20.0 git+https://github.com/MIR-MU/ARQMathCode.git
+    example: pip install lxml beautifulsoup4 transformers>=4.20.0 bert-score==0.3.11 git+https://github.com/MIR-MU/ARQMathCode.git
              python3 evaluate_task3_results_automatic.py
                -all_task1_answers "task1_arqmath3_runs/"
                -all_task3_answers "task3_arqmath3_runs/"
