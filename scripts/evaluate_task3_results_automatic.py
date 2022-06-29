@@ -45,12 +45,13 @@ def normalize_answer_text(answer):
     return answer
 
 
-def convert_task1_answer_id_to_answer(answer_id, data_reader_record):
+def convert_task1_answer_id_to_answer(answer_id, data_reader_record, max_answer_length=1200):
     """
     Converting answer ids to answer bodies in text + LaTeX format
     @param answer_id: id of the answer
     @param data_reader_record: ARQMathCode data reader
-    @return: the body text of the answer in text + LaTeX format
+    @param max_answer_length: the maximum length of an answer
+    @return: the body text of the answer in text + LaTeX format or None if the answer was too long
     """
     answer = data_reader_record.post_parser.map_just_answers[answer_id]
     answer_body = answer.body
@@ -59,10 +60,17 @@ def convert_task1_answer_id_to_answer(answer_id, data_reader_record):
     except etree.ParserError:
         answer_body = str(BeautifulSoup(answer_body, 'html5lib'))
         parsed_answer_body = document_fromstring(answer_body)
-    for math_element in parsed_answer_body.xpath('//span[@class = "math-container"]'):
+    math_elements = parsed_answer_body.xpath('//span[@class = "math-container"]')
+    for math_element in math_elements:
         math_tokens = math_element.text
         math_element.text = f' [MATH] {math_tokens} [/MATH] '
     answer_body_text = parsed_answer_body.text_content()
+
+    math_tag_length_overhead = len(math_elements) * (len(' [MATH] ') + len(' [/MATH] ') - len('$$'))
+    answer_length = len(answer_body_text) - math_tag_length_overhead
+    if answer_length > max_answer_length:
+        return None
+
     answer_body_text = normalize_answer_text(answer_body_text)
     return answer_body_text
 
@@ -108,7 +116,8 @@ def get_relevant_task1_answers(all_answers_directory, qrel_file, data_reader_rec
 
     for topic_id, answer_id in relevant_answer_ids:
         answer_body_text = convert_task1_answer_id_to_answer(answer_id, data_reader_record)
-        yield (topic_id, answer_body_text)
+        if answer_body_text is not None:
+            yield (topic_id, answer_body_text)
 
 
 def replace_dollars_with_math_tags(answer):
@@ -137,10 +146,11 @@ def replace_dollars_with_math_tags(answer):
     return answer
 
 
-def read_task3_result_file(file_path):
+def read_task3_result_file(file_path, max_answer_length=1200):
     """
     Reading input results file in ARQMath format for ARQMath-3 Task 3
     @param file_path: file path to input file
+    @param max_answer_length: the maximum length of an answer
     @return: iterable of topic ids and answer body texts in text + LaTeX format
     """
     with open(file_path, 'rt', newline='', encoding='utf-8') as csv_file:
@@ -148,6 +158,10 @@ def read_task3_result_file(file_path):
         for line_number, row in enumerate(csv_reader):
             line_number += 1
             topic_id, *_, answer_body_text = row
+            if len(answer_body_text) > max_answer_length:
+                raise ValueError(f'Answer to topic {topic_id} on line {line_number} contains '
+                                 f'{len(answer_body_text)} Unicode characters, but at most '
+                                 f'{max_answer_length} were expected.')
             answer_body_text = replace_dollars_with_math_tags(answer_body_text)
             if answer_body_text is None:
                 LOGGER.warning(f'Found an odd number of dollar signs ($) in answer to topic {topic_id} '
