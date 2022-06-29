@@ -52,9 +52,10 @@ def read_task3_qrel_file(file_path):
 
 def main():
     """
-    example: python3 evaluate_task3_results.py -in "Baseline2022-task3-GPT3-auto-both-generate-P.tsv"
-                                               -map "teams_answer_id.tsv"
-                                               -qrel "qrel_task3_2022_official_complete.tsv"
+    example: python3 evaluate_task3_results_manual.py
+               -in "Baseline2022-task3-GPT3-auto-both-generate-P.tsv"
+               -map "teams_answer_id.tsv"
+               -qrel "qrel_task3_2022_official_complete.tsv"
     @return:
     """
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
