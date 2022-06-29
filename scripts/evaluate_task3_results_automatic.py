@@ -1,6 +1,7 @@
 import argparse
 from collections import defaultdict
 import csv
+import json
 import logging
 from pathlib import Path
 from statistics import mean
@@ -20,15 +21,13 @@ def read_task1_result_file(file_path):
     """
     Reading input results file in ARQMath format for ARQMath-3 Task 3
     @param file_path: file path to input file
-    @return: iterable of topic ids, answer ids, ranks, and scores
+    @return: iterable of topic ids, answer ids, and run ids
     """
     with open(file_path, 'rt', newline='', encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter='\t')
         for row in csv_reader:
-            topic_id, answer_id, rank, score, run_name = row
-            rank = int(rank)
-            score = float(score)
-            yield (topic_id, answer_id, rank, score)
+            topic_id, answer_id, *_, run_id = row
+            yield topic_id, answer_id, run_id
 
 
 def normalize_answer_text(answer):
@@ -89,12 +88,14 @@ def read_task1_qrel_file(file_path):
             yield ((topic_id, document_id), relevance_judgement)
 
 
-def get_relevant_task1_answers(all_answers_directory, qrel_file, data_reader_record):
+def get_relevant_task1_answers(all_answers_directory, qrel_file, data_reader_record,
+                               excluded_run_ids):
     """
     Reading all relevant answers for ARQMath-3 Task 1 topics
-    @param all_answers_directory: Input directory with all runs for ARQMath-3 Task 1
-    @param qrel_file: Input file with relevance judgements for ARQMath-3 Task 1
+    @param all_answers_directory: input directory with all runs for ARQMath-3 Task 1
+    @param qrel_file: input file with relevance judgements for ARQMath-3 Task 1
     @param data_reader_record: ARQMathCode data reader
+    @param excluded_run_ids: set of blacklisted run ids that will disqualify answers uniquely contributed ny them
     @return: iterable of topic ids and answer body texts in text + LaTeX format
     """
     qrel_dict = dict(read_task1_qrel_file(qrel_file))
@@ -105,19 +106,24 @@ def get_relevant_task1_answers(all_answers_directory, qrel_file, data_reader_rec
         raise ValueError(f'No Task 1 result files found in directory {all_answers_directory}')
 
     relevant_answer_ids = set()
+    answer_run_ids = defaultdict(lambda: set())
     for result_file in all_result_files:
-        for topic_id, answer_id, *_ in read_task1_result_file(result_file):
+        for topic_id, answer_id, run_id in read_task1_result_file(result_file):
             try:
                 judgement = qrel_dict[topic_id, answer_id]
                 if judgement > 1:
+                    answer_run_ids[topic_id, answer_id].add(run_id)
                     relevant_answer_ids.add((topic_id, answer_id))
             except KeyError:
                 pass
 
     for topic_id, answer_id in relevant_answer_ids:
+        run_ids = answer_run_ids[topic_id, answer_id]
+        if not (run_ids - excluded_run_ids):
+            continue
         answer_body_text = convert_task1_answer_id_to_answer(answer_id, data_reader_record)
         if answer_body_text is not None:
-            yield (topic_id, answer_body_text)
+            yield topic_id, answer_body_text
 
 
 def replace_dollars_with_math_tags(answer):
@@ -151,13 +157,13 @@ def read_task3_result_file(file_path, max_answer_length=1200):
     Reading input results file in ARQMath format for ARQMath-3 Task 3
     @param file_path: file path to input file
     @param max_answer_length: the maximum length of an answer
-    @return: iterable of topic ids and answer body texts in text + LaTeX format
+    @return: iterable of topic ids, run ids and answer body texts in text + LaTeX format
     """
     with open(file_path, 'rt', newline='', encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter='\t')
         for line_number, row in enumerate(csv_reader):
             line_number += 1
-            topic_id, *_, answer_body_text = row
+            topic_id, _, __, run_id, ___, answer_body_text = row
             if len(answer_body_text) > max_answer_length:
                 raise ValueError(f'Answer to topic {topic_id} on line {line_number} contains '
                                  f'{len(answer_body_text)} Unicode characters, but at most '
@@ -168,7 +174,7 @@ def read_task3_result_file(file_path, max_answer_length=1200):
                                f'on line {line_number} from run file {file_path}. Skipping.')
                 continue
             answer_body_text = normalize_answer_text(answer_body_text)
-            yield topic_id, answer_body_text
+            yield topic_id, run_id, answer_body_text
 
 
 def read_task3_map_file(file_path, expected_run_name):
@@ -200,12 +206,13 @@ def read_task3_qrel_file(file_path):
             yield ((topic_id, answer_id), relevance_judgement)
 
 
-def get_relevant_task3_answers(all_answers_directory, qrel_file, map_file):
+def get_relevant_task3_answers(all_answers_directory, qrel_file, map_file, excluded_run_ids):
     """
     Reading all relevant answers for ARQMath-3 Task 1 topics
     @param all_answers_directory: Input directory with all runs for ARQMath-3 Task 1
     @param qrel_file: Input file with complete relevance judgements for ARQMath-3 Task 1
     @param map_file: Input map file from topic IDs and run names to synthetic answer IDs for ARQMath-3 Task 3
+    @param excluded_run_ids: set of blacklisted run ids that will disqualify answers uniquely contributed ny them
     @return: iterable of topic ids and answer body texts in text + LaTeX format
     """
     qrel_dict = dict(read_task3_qrel_file(qrel_file))
@@ -215,11 +222,13 @@ def get_relevant_task3_answers(all_answers_directory, qrel_file, map_file):
     if not all_result_files:
         raise ValueError(f'No Task 3 result files found in directory {all_answers_directory}')
 
+    relevant_answers = set()
+    answer_run_ids = defaultdict(lambda: set())
     for result_file in all_result_files:
         run_name = Path(result_file).stem
         map_dict = dict(read_task3_map_file(map_file, run_name))
         result_set = set()
-        for topic_id, answer_body_text in read_task3_result_file(result_file):
+        for topic_id, run_id, answer_body_text in read_task3_result_file(result_file):
             if topic_id in result_set:
                 raise ValueError(f'Repeated topic {topic_id} in {result_file}')
             result_set.add(topic_id)
@@ -229,9 +238,16 @@ def get_relevant_task3_answers(all_answers_directory, qrel_file, map_file):
                 if judgement not in {0, 1, 2, 3, 5, 6}:
                     raise ValueError(f'Unknown judgement value {judgement}, expected 0-3, 5, or 6')
                 if judgement > 1 and judgement < 4:
-                    yield topic_id, answer_body_text
+                    answer_run_ids[topic_id, answer_body_text].add(run_id)
+                    relevant_answers.add((topic_id, answer_body_text))
             except KeyError:
                 pass
+
+    for topic_id, answer_body_text in relevant_answers:
+        run_ids = answer_run_ids[topic_id, answer_body_text]
+        if not (run_ids - excluded_run_ids):
+            continue
+        yield topic_id, answer_body_text
 
 
 def write_all_relevant_answers(all_relevant_answers, file_path):
@@ -273,7 +289,8 @@ def main():
     example: pip install lxml beautifulsoup4 transformers>=4.20.0 git+https://github.com/MIR-MU/ARQMathCode.git
              python3 evaluate_task3_results_automatic.py
                -all_task1_answers "task1_arqmath3_runs/"
-               -all_task3_answers "task3_arqmath3_runs_without_GPT3/"
+               -all_task3_answers "task3_arqmath3_runs/"
+               -exclude_run_ids "['GPT3']"
                -collection "collection/"
                -in "Baseline2022-task3-GPT3-auto-both-generate-P.tsv"
                -map "teams_answer_id.tsv"
@@ -287,12 +304,17 @@ def main():
     parser = argparse.ArgumentParser(
         description='Compute Task 3 automatic evaluation measures (LO, CS) for Task 3 results')
     parser.add_argument('-all_task1_answers',
-                        help=('Input directory with all runs for ARQMath-3 Task 1 except runs '
-                              'from the same team whose run we are evaluating'),
+                        help=('Input directory with all runs for ARQMath-3 Task 1'),
                         required=True)
     parser.add_argument('-all_task3_answers',
-                        help=('Input directory with all runs for ARQMath-3 Task 3 except runs '
-                              'from the same team whose run we are evaluating'),
+                        help=('Input directory with all runs for ARQMath-3 Task 3'),
+                        required=True)
+    parser.add_argument('-excluded_run_ids',
+                        help=('A JSON array of run ids of results from the same team as the '
+                              'result file being evaluated including the run id of the result '
+                              'file being evaluated; all relevant answers contributed '
+                              'uniquely by result files with these run ids will be excluded '
+                              'from the evaluation'),
                         required=True)
     parser.add_argument('-collection',
                         help='Input directory with ARQMath-3 collection',
@@ -320,6 +342,7 @@ def main():
     args = vars(parser.parse_args())
     all_task1_answers_directory = args['all_task1_answers']
     all_task3_answers_directory = args['all_task3_answers']
+    excluded_run_ids = args['excluded_run_ids']
     collection_directory = args['collection']
     result_file = args['in']
     map_file = args['map']
@@ -327,12 +350,15 @@ def main():
     task3_qrel_file = args['task3_qrel']
     output_all_relevant_answers_file = args['relevant_answer_dump']
 
+    excluded_run_ids_set = set(json.loads(excluded_run_ids))
+    LOGGER.info(f'Excluded run ids: {sorted(excluded_run_ids_set)}')
+
     data_reader_record = DataReaderRecord(collection_directory)
 
     all_relevant_task1_answers = get_relevant_task1_answers(
-            all_task1_answers_directory, task1_qrel_file, data_reader_record)
+            all_task1_answers_directory, task1_qrel_file, data_reader_record, excluded_run_ids_set)
     all_relevant_task3_answers = get_relevant_task3_answers(
-            all_task3_answers_directory, task3_qrel_file, map_file)
+            all_task3_answers_directory, task3_qrel_file, map_file, excluded_run_ids_set)
 
     all_relevant_answers = defaultdict(lambda: set())
     for topic_id, answer in zip(all_relevant_task1_answers, all_relevant_task3_answers):
@@ -343,7 +369,7 @@ def main():
 
     result_answers = []
     missing_topics = set()
-    for topic_id, answer in read_task3_result_file(result_file):
+    for topic_id, _, answer in read_task3_result_file(result_file):
         try:
             relevant_answers = all_relevant_answers[topic_id]
             result_answers.append((answer, relevant_answers))
