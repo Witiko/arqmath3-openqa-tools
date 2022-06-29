@@ -40,6 +40,7 @@ def normalize_answer_text(answer):
     @return: the normalized answer body text in text + LaTeX format
     """
     answer = answer.rstrip()
+    answer = re.sub(r'\s+', ' ', answer)
     if not answer.startswith(' [MATH]'):
         answer = answer.lstrip()
     answer = re.sub(r' \[/MATH\] \[MATH\] ', ' ', answer)
