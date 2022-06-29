@@ -4,6 +4,7 @@ import csv
 import logging
 from pathlib import Path
 from statistics import mean
+import re
 
 from arqmathcode.post_reader_record import DataReaderRecord
 from lxml import etree
@@ -47,7 +48,11 @@ def convert_task1_answer_id_to_answer(answer_id, data_reader_record):
         math_tokens = math_element.text
         math_element.text = f' [MATH] {math_tokens} [/MATH] '
     answer_body_text = parsed_answer_body.text_content()
-    answer_body_text = answer_body_text.strip()
+    answer_body_text = answer_body_text.rstrip()
+    if not answer_body_text.startswith(' [MATH]'):
+        answer_body_text = answer_body_text.lstrip()
+    answer_body_text = re.sub(r' \[/MATH\] \[MATH\] ', ' ', answer_body_text)
+    answer_body_text = re.sub(r' \[/MATH\]$', '', answer_body_text)
     return answer_body_text
 
 
