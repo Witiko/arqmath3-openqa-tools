@@ -2,6 +2,11 @@ from collections import defaultdict
 import csv
 import logging
 
+from arqmathcode.post_reader_record import DataReaderRecord
+from lxml import etree
+from lxml.html import document_fromstring
+from bs4 import BeautifulSoup
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -21,19 +26,26 @@ def read_task1_result_file(file_path):
             yield (topic_id, answer_id, rank, score)
 
 
-def get_top1_task1_results(file_path):
+def convert_task1_answer_id_to_answer(answer_id, data_reader_record):
     """
-    Reading input results file in ARQMath format for ARQMath Task 3
-    and extracting top-1 results
-    @param file_path: file path to input file
-    @return: iterable of topic ids, and answer ids
+    Converting answer ids to answer bodies in text + LaTeX format
+    @param answer_id: id of the answer
+    @param data_reader_record: ARQMathCode data reader
+    @return the body text of the answer in text + LaTeX format
     """
-    results = defaultdict(lambda: list())
-    for topic_id, answer_id, rank, score in read_task1_result_file(file_path):
-        results[topic_id].append((score, -rank, answer_id))
-    for topic_id, answers in sorted(results.items()):
-        *_, answer_id = max(answers)
-        yield topic_id, answer_id
+    answer = documents_text_reader.post_parser.map_just_answers[answer_id]
+    answer_body = answer.body
+    try:
+        parsed_answer_body = document_fromstring(answer_body)
+    except etree.ParserError:
+        answer_body = str(BeautifulSoup(answer_body, 'html5lib'))
+        parsed_answer_body = document_fromstring(answer_body)
+    for math_element in parsed_answer_body.xpath('//span[@class = "math-container"]'):
+        math_tokens = math_element.text
+        math_element.text = f'${math_tokens}$'
+    answer_body_text = parsed_answer_body.text_content()
+    answer_body_text = answer_body_text.strip()
+    return answer_body_text
 
 
 def read_task1_qrel_file(file_path):
@@ -48,3 +60,8 @@ def read_task1_qrel_file(file_path):
             topic_id, _, document_id, relevance_judgement = row
             relevance_judgement = int(relevance_judgement)
             yield ((topic_id, document_id), relevance_judgement)
+
+
+# pip install lxml beautifulsoup4 git+https://github.com/MIR-MU/ARQMathCode.git
+# from arqmathcode.post_reader_record import DataReaderRecord
+# data_reader_record = DataReaderRecord(str(documents_text))
