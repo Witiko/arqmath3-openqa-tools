@@ -9,6 +9,7 @@ from statistics import mean
 import re
 
 from arqmathcode.post_reader_record import DataReaderRecord
+from bert_score import BERTScorer
 from lxml import etree
 from lxml.html import document_fromstring
 from bs4 import BeautifulSoup
@@ -278,15 +279,18 @@ def tokenize(tokenizer, answer):
     return tokens
 
 
-def compute_contextual_similarity(topic_id, answer, relevant_answers):
+def compute_contextual_similarity(topic_id, answer, relevant_answers, bertscorer):
     """
     Computing contextual similarity between an answer and the most similar out of relevant answers
     @param topic_id: the id of the topic for which the answer was given
     @param answer: answer body text in text + LaTeX format
     @param relevant_answers: set of relevant answer body texts in text + LaTeX format
+    @param bertscorer: a bertscorer object for computing the contextual similarity
     @return: contextual similarity
     """
-    return 1.0  # TODO
+    *_, best_f1_scores = bertscorer.score([answer], relevant_answers)
+    best_f1_score, = best_f1_scores.detach().cpu().tolist()
+    return best_f1_score
 
 
 def compute_lexical_overlap(topic_id, answer, relevant_answers, tokenizer):
@@ -414,12 +418,15 @@ def main():
         LOGGER.warning(f'Running the evaluation using just {len(result_answers)} topics')
 
     tokenizer = AutoTokenizer.from_pretrained('witiko/mathberta', add_prefix_space=True)
+    bertscorer = BERTScorer(model_type='witiko/mathberta', num_layers=10)
 
     lexical_overlaps = []
     contextual_similarities = []
     for topic_id, answer, relevant_answers in result_answers:
-        partial_lexical_overlap = compute_lexical_overlap(topic_id, answer, relevant_answers, tokenizer)
-        partial_contextual_similarity = compute_contextual_similarity(topic_id, answer, relevant_answers)
+        partial_lexical_overlap = compute_lexical_overlap(
+            topic_id, answer, relevant_answers, tokenizer)
+        partial_contextual_similarity = compute_contextual_similarity(
+            topic_id, answer, relevant_answers, bertscorer)
         lexical_overlaps.append(partial_lexical_overlap)
         contextual_similarities.append(partial_contextual_similarity)
 
