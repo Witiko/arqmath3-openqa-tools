@@ -252,7 +252,7 @@ def write_all_relevant_answers(all_relevant_answers, file_path):
     """
     result_file = open(file_path, 'wt', newline='', encoding='utf-8')
     csv_writer = csv.writer(result_file, delimiter='\t', quoting=csv.QUOTE_MINIMAL)
-    for topic_id, relevant_answers in sorted(all_relevant_answers):
+    for topic_id, relevant_answers in sorted(all_relevant_answers.items()):
         for relevant_answer in relevant_answers:
             row = (topic_id, relevant_answer)
             csv_writer.writerow(row)
