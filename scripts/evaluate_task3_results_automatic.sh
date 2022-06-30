@@ -23,6 +23,7 @@ evaluate() {
     -in "runs/task3_arqmath3/$BASENAME.tsv" \
     -excluded_task1_run_ids "$EXCLUDED_TASK1_RUNS" \
     -excluded_task3_run_ids "$EXCLUDED_TASK3_RUNS" \
+    -use_task1_answers false \
     -map "data/teams_document_id.tsv" \
     -task1_qrel "data/qrel_task1_2022_official.tsv" \
     -task3_qrel "data/qrel_task3_2022_official_complete.tsv" \

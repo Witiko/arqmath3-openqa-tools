@@ -343,6 +343,7 @@ def main():
                -all_task3_answers "task3_arqmath3_runs/"
                -excluded_task1_run_ids '[]'
                -excluded_task3_run_ids '["GPT3"]'
+               -use_task1_answers false
                -collection "collection/"
                -in "Baseline2022-task3-GPT3-auto-both-generate-P.tsv"
                -map "teams_answer_id.tsv"
@@ -375,6 +376,9 @@ def main():
                               'uniquely by result files with these run ids will be excluded '
                               'from the evaluation'),
                         required=True)
+    parser.add_argument('-use_task1_answers',
+                        help='Whether we will use ARQMath-3 Task 1 relevant answers for the evaluation',
+                        required=True)
     parser.add_argument('-collection',
                         help='Input directory with ARQMath-3 collection',
                         required=True)
@@ -404,31 +408,39 @@ def main():
     excluded_task1_run_ids = args['excluded_task1_run_ids']
     excluded_task3_run_ids = args['excluded_task3_run_ids']
     collection_directory = args['collection']
+    use_task1_answers = args['use_task1_answers']
     result_file = args['in']
     map_file = args['map']
     task1_qrel_file = args['task1_qrel']
     task3_qrel_file = args['task3_qrel']
     output_all_relevant_answers_file = args['relevant_answer_dump']
 
-    excluded_task1_run_ids_set = set(json.loads(excluded_task1_run_ids))
+    assert use_task1_answers in {'true', 'false'}
+    use_task1_answers = use_task1_answers == 'true'
+
+    if use_task1_answers:
+        excluded_task1_run_ids_set = set(json.loads(excluded_task1_run_ids))
+        LOGGER.info(f'Excluded Task 1 run ids: {sorted(excluded_task1_run_ids_set)}')
+
     excluded_task3_run_ids_set = set(json.loads(excluded_task3_run_ids))
-    LOGGER.info(f'Excluded Task 1 run ids: {sorted(excluded_task1_run_ids_set)}')
     LOGGER.info(f'Excluded Task 3 run ids: {sorted(excluded_task3_run_ids_set)}')
 
-    LOGGER.info(f'Loading ARQMath collection from {collection_directory}')
-    data_reader_record = DataReaderRecord(collection_directory, version='.V1.3')
+    if use_task1_answers:
+        LOGGER.info(f'Loading ARQMath collection from {collection_directory}')
+        data_reader_record = DataReaderRecord(collection_directory, version='.V1.3')
 
-    LOGGER.info(f'Collecting all relevant Task 1 answers from {all_task1_answers_directory}')
-    all_relevant_task1_answers = get_relevant_task1_answers(
-            all_task1_answers_directory, task1_qrel_file, data_reader_record, excluded_task1_run_ids_set)
+        LOGGER.info(f'Collecting all relevant Task 1 answers from {all_task1_answers_directory}')
+        all_relevant_task1_answers = get_relevant_task1_answers(
+                all_task1_answers_directory, task1_qrel_file, data_reader_record, excluded_task1_run_ids_set)
     LOGGER.info(f'Collecting all relevant Task 3 answers from {all_task1_answers_directory}')
     all_relevant_task3_answers = get_relevant_task3_answers(
             all_task3_answers_directory, task3_qrel_file, map_file, excluded_task3_run_ids_set)
 
     all_relevant_answers = defaultdict(lambda: set())
     all_relevant_task3_topics = set()
-    for topic_id, answer in all_relevant_task1_answers:
-        all_relevant_answers[topic_id].add(answer)
+    if use_task1_answers:
+        for topic_id, answer in all_relevant_task1_answers:
+            all_relevant_answers[topic_id].add(answer)
     for topic_id, answer in all_relevant_task3_answers:
         all_relevant_task3_topics.add(topic_id)
         all_relevant_answers[topic_id].add(answer)
