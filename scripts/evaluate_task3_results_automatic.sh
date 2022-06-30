@@ -1,6 +1,6 @@
 #!/bin/bash
 # A helper script for the evaluation of Task 3 results
-set -e -o xtrace
+set -e -o xtrace -o pipefail
 
 mkdir -p task3-automatic-results
 
