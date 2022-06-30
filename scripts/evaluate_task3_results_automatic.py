@@ -1,6 +1,5 @@
 import argparse
 from collections import defaultdict
-from itertools import chain
 from functools import lru_cache
 import csv
 import json
@@ -48,7 +47,7 @@ def normalize_answer_text(answer):
     return answer
 
 
-def convert_task1_answer_id_to_answer(answer_id, data_reader_record, max_answer_length=float('-inf')):
+def convert_task1_answer_id_to_answer(answer_id, data_reader_record, max_answer_length=1200):
     """
     Converting answer ids to answer bodies in text + LaTeX format
     @param answer_id: id of the answer
@@ -427,8 +426,13 @@ def main():
             all_task3_answers_directory, task3_qrel_file, map_file, excluded_task3_run_ids_set)
 
     all_relevant_answers = defaultdict(lambda: set())
-    for topic_id, answer in chain(all_relevant_task1_answers, all_relevant_task3_answers):
+    all_relevant_task3_topics = set()
+    for topic_id, answer in all_relevant_task3_answers:
         all_relevant_answers[topic_id].add(answer)
+        all_relevant_task3_topics.add(topic_id)
+    for topic_id, answer in all_relevant_task1_answers:
+        if topic_id not in all_relevant_task3_topics:
+            all_relevant_answers[topic_id].add(answer)
 
     if output_all_relevant_answers_file is not None:
         LOGGER.info(f'Writing all relevant answers to {output_all_relevant_answers_file}')
