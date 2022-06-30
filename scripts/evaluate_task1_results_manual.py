@@ -2,6 +2,7 @@ from collections import defaultdict
 from statistics import mean
 import argparse
 import csv
+import json
 import logging
 
 
@@ -55,6 +56,7 @@ def read_task1_qrel_file(file_path):
 def main():
     """
     example: python3 evaluate_task1_results.py -in "TangentS_task1_2021.tsv"
+                                               -excluded_topics '[]'
                                                -map "teams_answer_id.tsv"
                                                -qrel "qrel_task1_2022_official.tsv"
     @return:
@@ -66,13 +68,20 @@ def main():
     parser.add_argument('-in',
                         help='Input result file in ARQMath format for ARQMath Task 1',
                         required=True)
+    parser.add_argument('-excluded_topics',
+                        help=('A JSON array of topics excluded from the evaluation'),
+                        required=True)
     parser.add_argument('-qrel',
                         help='Input file with relevance judgements for ARQMath Task 1',
                         required=True)
 
     args = vars(parser.parse_args())
     result_file = args['in']
+    excluded_topics = args['excluded_topics']
     qrel_file = args['qrel']
+
+    excluded_topics_set = set(json.loads(excluded_topics))
+    LOGGER.info(f'Excluded topics: {sorted(excluded_topics_set)}')
 
     result_dict = dict(get_top1_task1_results(result_file))
     qrel_dict = dict(read_task1_qrel_file(qrel_file))
@@ -80,6 +89,8 @@ def main():
     missing_topics = set()
     judgements = []
     for topic_id, answer_id in sorted(result_dict.items()):
+        if topic_id not in excluded_topics_set:
+            continue
         try:
             judgement = qrel_dict[topic_id, answer_id]
             judgements.append(judgement)
