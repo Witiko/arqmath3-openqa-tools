@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds a Docker image with SCM and Jupyter Lab and runs the image at apollo.fi.muni.cz
+# Builds a Docker image with Python and CUDA and launches Bash
 set -e -o xtrace
 
 GPUS=16
