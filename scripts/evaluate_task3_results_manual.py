@@ -2,6 +2,7 @@ from pathlib import Path
 from statistics import mean
 import argparse
 import csv
+import json
 import logging
 
 
@@ -54,6 +55,7 @@ def main():
     """
     example: python3 evaluate_task3_results_manual.py
                -in "Baseline2022-task3-GPT3-auto-both-generate-P.tsv"
+               -excluded_topics '[]'
                -map "teams_answer_id.tsv"
                -qrel "qrel_task3_2022_official_complete.tsv"
     @return:
@@ -65,6 +67,9 @@ def main():
     parser.add_argument('-in',
                         help='Input result file in ARQMath format for ARQMath Task 3',
                         required=True)
+    parser.add_argument('-excluded_topics',
+                        help=('A JSON array of topics excluded from the evaluation'),
+                        required=True)
     parser.add_argument('-map',
                         help='Input map file from topic IDs and run names to synthetic answer IDs for ARQMath Task 3',
                         required=True)
@@ -75,9 +80,13 @@ def main():
 
     args = vars(parser.parse_args())
     result_file = args['in']
+    excluded_topics = args['excluded_topics']
     run_name = Path(result_file).stem
     map_file = args['map']
     qrel_file = args['qrel']
+
+    excluded_topics_set = set(json.loads(excluded_topics))
+    LOGGER.info(f'Excluded topics: {sorted(excluded_topics_set)}')
 
     map_dict = dict(read_task3_map_file(map_file, run_name))
     qrel_dict = dict(read_task3_qrel_file(qrel_file))
@@ -85,6 +94,8 @@ def main():
     missing_topics = set()
     result_dict = dict()
     for topic_id in read_task3_result_file(result_file):
+        if topic_id not in excluded_topics_set:
+            continue
         if topic_id in result_dict:
             raise ValueError(f'Repeated topic {topic_id} in {result_file}')
         try:

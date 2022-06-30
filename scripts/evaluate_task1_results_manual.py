@@ -57,7 +57,6 @@ def main():
     """
     example: python3 evaluate_task1_results.py -in "TangentS_task1_2021.tsv"
                                                -excluded_topics '[]'
-                                               -map "teams_answer_id.tsv"
                                                -qrel "qrel_task1_2022_official.tsv"
     @return:
     """
