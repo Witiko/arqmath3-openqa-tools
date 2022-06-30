@@ -23,6 +23,7 @@ evaluate() {
     -in "runs/task3_arqmath3/$BASENAME.tsv" \
     -excluded_task1_run_ids "$EXCLUDED_TASK1_RUNS" \
     -excluded_task3_run_ids "$EXCLUDED_TASK3_RUNS" \
+    -excluded_topics '["A.302", "A.303", "A.305", "A.308", "A.309", "A.310", "A.314", "A.316", "A.317", "A.318", "A.324", "A.325", "A.327", "A.332", "A.333", "A.338", "A.342", "A.345", "A.346", "A.348", "A.349", "A.352", "A.354", "A.357", "A.358", "A.361", "A.362", "A.363", "A.366", "A.368", "A.369", "A.370", "A.376", "A.379", "A.381", "A.382", "A.383", "A.384", "A.385", "A.388", "A.391", "A.394", "A.399"]' \
     -use_task1_answers false \
     -map "data/teams_document_id.tsv" \
     -task1_qrel "data/qrel_task1_2022_official.tsv" \

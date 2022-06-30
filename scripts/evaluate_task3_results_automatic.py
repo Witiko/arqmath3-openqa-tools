@@ -343,6 +343,8 @@ def main():
                -all_task3_answers "task3_arqmath3_runs/"
                -excluded_task1_run_ids '[]'
                -excluded_task3_run_ids '["GPT3"]'
+               -excluded_topics '["A.302", "A.303", "A.327", "A.332", "A.338", "A.348",
+                                  "A.358", "A.362", "A.363", "A.382", "A.383", "A.391"]'
                -use_task1_answers false
                -collection "collection/"
                -in "Baseline2022-task3-GPT3-auto-both-generate-P.tsv"
@@ -376,6 +378,9 @@ def main():
                               'uniquely by result files with these run ids will be excluded '
                               'from the evaluation'),
                         required=True)
+    parser.add_argument('-excluded_topics',
+                        help=('A JSON array of topics excluded from the evaluation'),
+                        required=True)
     parser.add_argument('-use_task1_answers',
                         help='Whether we will use ARQMath-3 Task 1 relevant answers for the evaluation',
                         required=True)
@@ -407,6 +412,7 @@ def main():
     all_task3_answers_directory = args['all_task3_answers']
     excluded_task1_run_ids = args['excluded_task1_run_ids']
     excluded_task3_run_ids = args['excluded_task3_run_ids']
+    excluded_topics = args['excluded_topics']
     collection_directory = args['collection']
     use_task1_answers = args['use_task1_answers']
     result_file = args['in']
@@ -417,6 +423,9 @@ def main():
 
     assert use_task1_answers in {'true', 'false'}
     use_task1_answers = use_task1_answers == 'true'
+
+    excluded_topics_set = set(json.loads(excluded_topics))
+    LOGGER.info(f'Excluded topics: {sorted(excluded_topics_set)}')
 
     if use_task1_answers:
         excluded_task1_run_ids_set = set(json.loads(excluded_task1_run_ids))
@@ -440,13 +449,14 @@ def main():
     all_relevant_task3_topics = set()
     if use_task1_answers:
         for topic_id, answer in all_relevant_task1_answers:
+            if topic_id in excluded_topics_set:
+                continue
             all_relevant_answers[topic_id].add(answer)
     for topic_id, answer in all_relevant_task3_answers:
+        if topic_id in excluded_topics_set:
+            continue
         all_relevant_task3_topics.add(topic_id)
         all_relevant_answers[topic_id].add(answer)
-
-    LOGGER.info(f'Only {len(all_relevant_task3_topics)} topics with relevant Task 3 answers '
-                f'exist: {sorted(all_relevant_task3_topics)}')
 
     if output_all_relevant_answers_file is not None:
         LOGGER.info(f'Writing all relevant answers to {output_all_relevant_answers_file}')
