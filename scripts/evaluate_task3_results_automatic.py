@@ -427,12 +427,14 @@ def main():
 
     all_relevant_answers = defaultdict(lambda: set())
     all_relevant_task3_topics = set()
-    for topic_id, answer in all_relevant_task3_answers:
-        all_relevant_answers[topic_id].add(answer)
-        all_relevant_task3_topics.add(topic_id)
     for topic_id, answer in all_relevant_task1_answers:
-        if topic_id not in all_relevant_task3_topics:
-            all_relevant_answers[topic_id].add(answer)
+        all_relevant_answers[topic_id].add(answer)
+    for topic_id, answer in all_relevant_task3_answers:
+        all_relevant_task3_topics.add(topic_id)
+        all_relevant_answers[topic_id].add(answer)
+
+    LOGGER.info(f'Only {len(all_relevant_task3_topics)} topics with relevant Task 3 answers '
+                f'exist: {sorted(all_relevant_task3_topics)}')
 
     if output_all_relevant_answers_file is not None:
         LOGGER.info(f'Writing all relevant answers to {output_all_relevant_answers_file}')
