@@ -26,8 +26,6 @@ evaluate() {
 # Baselines
 evaluate Baseline2022-task3-GPT3-auto-both-generate-P '[]' '["GPT3"]'
 
-exit
-
 # Approach0
 APPROACH0_EXCLUDED_TASK1_RUNS='[
   "APPROACH0",
