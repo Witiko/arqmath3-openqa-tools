@@ -324,7 +324,10 @@ def compute_lexical_overlap(result_answers, model='witiko/mathberta'):
             intersection = tokenized_answer & tokenized_relevant_answer
             precision = 1.0 * len(intersection) / len(tokenized_answer)
             recall = 1.0 * len(intersection) / len(tokenized_relevant_answer)
-            f1_score = 2.0 * precision * recall / (precision + recall)
+            if precision + recall == 0.0:
+                f1_score = 0.0
+            else:
+                f1_score = 2.0 * precision * recall / (precision + recall)
             if f1_score > best_f1_score:
                 best_f1_score = f1_score
         best_f1_scores.append(best_f1_score)
