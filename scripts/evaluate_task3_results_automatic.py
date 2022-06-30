@@ -343,9 +343,8 @@ def main():
                -all_task3_answers "task3_arqmath3_runs/"
                -excluded_task1_run_ids '[]'
                -excluded_task3_run_ids '["GPT3"]'
-               -excluded_topics '["A.302", "A.303", "A.327", "A.332", "A.338", "A.348",
-                                  "A.358", "A.362", "A.363", "A.382", "A.383", "A.391"]'
-               -use_task1_answers false
+               -excluded_topics '[]'
+               -use_task1_answers true
                -collection "collection/"
                -in "Baseline2022-task3-GPT3-auto-both-generate-P.tsv"
                -map "teams_answer_id.tsv"
