@@ -435,10 +435,10 @@ def main():
     missing_topics = set()
     LOGGER.info(f'Reading result file {result_file}')
     for topic_id, _, answer in read_task3_result_file(result_file):
-        try:
+        if topic_id in all_relevant_answers:
             relevant_answers = all_relevant_answers[topic_id]
             result_answers.append((topic_id, answer, relevant_answers))
-        except KeyError:
+        else:
             missing_topics.add(topic_id)
 
     if missing_topics:
