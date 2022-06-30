@@ -48,7 +48,7 @@ def normalize_answer_text(answer):
     return answer
 
 
-def convert_task1_answer_id_to_answer(answer_id, data_reader_record, max_answer_length=1200):
+def convert_task1_answer_id_to_answer(answer_id, data_reader_record, max_answer_length=float('-inf')):
     """
     Converting answer ids to answer bodies in text + LaTeX format
     @param answer_id: id of the answer
