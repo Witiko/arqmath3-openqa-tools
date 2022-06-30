@@ -9,6 +9,13 @@ evaluate() {
   local EXCLUDED_TASK1_RUNS="$2"
   local EXCLUDED_TASK3_RUNS="$3"
 
+  if [[ -e "task3-automatic-results/$BASENAME.relevant_answers" ]]
+  then
+    return
+  fi
+
+  trap 'rm "task3-automatic-results/$BASENAME.relevant_answers"' EXIT
+
   python3 scripts/evaluate_task3_results_automatic.py \
     -all_task1_answers "runs/task1_arqmath3/" \
     -all_task3_answers "runs/task3_arqmath3/" \
@@ -21,6 +28,8 @@ evaluate() {
     -task3_qrel "data/qrel_task3_2022_official_complete.tsv" \
     -relevant_answer_dump "task3-automatic-results/$BASENAME.relevant_answers" \
     |& tee "task3-automatic-results/$BASENAME.output"
+
+  trap '' EXIT
 }
 
 # Baselines
