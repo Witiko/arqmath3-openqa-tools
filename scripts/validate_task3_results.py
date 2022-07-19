@@ -41,7 +41,7 @@ def read_task3_result_file(file_path, max_answer_length=1200):
 
 def main():
     """
-    example: python3 validate_task3_results.py -in "TangentS_task3_2021.tsv"
+    example: python3 validate_task3_results.py -in "Baseline2022-task3-GPT3-auto-both-generate-P.tsv"
     @return:
     """
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
