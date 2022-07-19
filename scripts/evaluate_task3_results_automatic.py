@@ -364,7 +364,7 @@ def main():
                         help=('Input directory with all runs for ARQMath-3 Task 3'),
                         required=True)
     parser.add_argument('-excluded_task1_run_ids',
-                        help=('A JSON array of Task1 run ids of results from the same team as the '
+                        help=('A JSON array of Task 1 run ids of results from the same team as the '
                               'result file being evaluated including the run id of the result '
                               'file being evaluated; all relevant answers contributed '
                               'uniquely by result files with these run ids will be excluded '
