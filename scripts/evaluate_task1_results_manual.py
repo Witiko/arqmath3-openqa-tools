@@ -55,7 +55,7 @@ def read_task1_qrel_file(file_path):
 
 def main():
     """
-    example: python3 evaluate_task1_results.py -in "TangentS_task1_2021.tsv"
+    example: python3 evaluate_task1_results.py -in "baseline_tangents_task1_2022.tsv"
                                                -excluded_topics '[]'
                                                -qrel "qrel_task1_2022_official.tsv"
     @return:
